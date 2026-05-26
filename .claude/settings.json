@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "VIBEBOSS_DIR_PLACEHOLDER/.claude/hooks/route.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "VIBEBOSS_DIR_PLACEHOLDER/.claude/hooks/route.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

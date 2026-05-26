@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{HQ_PATH}}/.claude/hooks/boot.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{HQ_PATH}}/.claude/hooks/boot.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{HQ_PATH}}/.claude/hooks/compact-boot.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

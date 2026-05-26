@@ -1,0 +1,13 @@
+# Labs crew
+
+lead:
+  name: {{LAB_LEAD_NAME}}
+  role: lab research lead
+  project: labs
+  reports_to: {{LEAD_NAME}}
+  born_at: null
+  current_session_id: null
+  note: "Set born_at when first spawned."
+
+# Future lab agents can be added here if labs grows.
+# Naming follows hq/crew.yml theme (produce).
