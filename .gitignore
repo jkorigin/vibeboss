@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Runtime memory lives in a separate ../vibeboss-workspace/ directory (not in this repo).
+# See CLAUDE.md for the topology rationale. Nothing runtime should appear here at all;
+# if you find runtime files inside vibeboss/, they're misplaced — move them to the workspace.
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Editor-specific launch configs (machine/project-specific, not framework canon)
+.claude/launch.json
+
+# Temporary backup created by reno.sh during session — restored on exit.
+.claude/settings.json.reno-bak
+
+# Build / dependency outputs (placeholders for Phase 1+)
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs / scratch
+*.log
+tmp/
+.cache/

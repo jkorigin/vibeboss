@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{WORKSPACE}}/.claude/hooks/redirect.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{WORKSPACE}}/.claude/hooks/redirect.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

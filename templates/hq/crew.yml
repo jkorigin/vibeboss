@@ -1,0 +1,32 @@
+# Vibeboss Crew
+
+operator:
+  name: {{OPERATOR_NAME}}
+  role: Founder / original author / product direction
+  contact: {{OPERATOR_EMAIL}}
+
+venture_lead:
+  name: {{LEAD_NAME}}
+  role: Vibeboss venture lead — owns feasibility investigation, then architecture, then publication
+  reports_to: operator
+  addresses_operator_as: {{OPERATOR_ADDRESSED_AS}}
+
+naming_convention:
+  theme: produce
+  rationale: |
+    Short, memorable, pronounceable names for named agents.
+    Theme: vegetables + fruits + herbs ("produce").
+  rule: >
+    When a new agent is born, default to the name in next_available. Partner may
+    override any name; partner override always wins. After an override, update
+    next_available to the next unused produce name (alphabetical, vegetable preferred
+    but fruits and herbs allowed).
+  next_available: Artichoke
+
+# Each entry is a named project lead. Fields:
+#   name              — stable produce identity across sessions
+#   project           — matches hq/projects/<name>/ directory
+#   role              — "build lead" | "research lead" | "ops lead"
+#   born_at           — ISO date string set by {{LEAD_NAME}} at first spawn; null = pre-reserved but never spawned yet
+#   current_session_id — UUID from `claude agents --json` while spawn is live; null = dormant
+agents: []

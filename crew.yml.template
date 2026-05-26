@@ -1,0 +1,41 @@
+# Vibeboss Crew — Template
+#
+# Copy this file to your vibeboss HQ as crew.yml and fill in the placeholders.
+# This is the canonical schema reference for the crew registry.
+
+operator:
+  name: "{{OPERATOR_NAME}}"
+  role: "{{OPERATOR_ROLE}}"
+  contact: "{{OPERATOR_EMAIL}}"
+
+venture_lead:
+  name: "{{VENTURE_LEAD_NAME}}"          # Typically "Boss" — see Vibeboss identity conventions
+  role: "{{VENTURE_LEAD_ROLE}}"
+  reports_to: operator
+  addresses_operator_as: partner         # Always "partner" — see LESSON-001
+
+naming_convention:
+  theme: "{{NAMING_THEME}}"             # e.g. vegetables, colors, elements — pick one and commit
+  rationale: "{{NAMING_RATIONALE}}"
+  rule: >
+    When a new agent is born, assign the next unused name in the chosen theme (alphabetical order).
+    The canonical list of taken names is the agents[].name field in this file.
+  next_available: "{{NEXT_AVAILABLE_NAME}}"
+
+# agents: registry of all named build/research leads.
+# Each entry represents a persistent identity that owns work on a specific project.
+# Fields:
+#   name              — stable identity across sessions (from naming_convention.theme)
+#   project           — matches hq/projects/<name>/ directory
+#   role              — "build lead" | "research lead" | "ops lead"
+#   born_at           — ISO date string when first spawned; null = pre-reserved but unborn
+#   current_session_id — UUID from `claude agents --json`; null = dormant (no active spawn)
+agents:
+  - name: "{{FIRST_AGENT_NAME}}"
+    project: "{{FIRST_PROJECT}}"
+    role: build lead
+    born_at: null
+    current_session_id: null
+
+  # Add more agents as projects are authorized. Pre-reserve names for planned projects
+  # by listing them with born_at: null and current_session_id: null.
