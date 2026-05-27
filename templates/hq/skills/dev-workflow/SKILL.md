@@ -26,9 +26,9 @@ The standard development loop for Boss and any Build agent operating in the Vibe
 | 0 | **Research** | Requirement unclear OR API/codebase area unfamiliar | Spike must be validated before any of it is adopted | Notes confirming: what it does, how to call it, what breaks if misused |
 | 1 | **Build** | Requirement clear + research done | Write at least one failing test before implementation | Working code + ≥1 passing test |
 | 2 | **Test** | Build complete | All tests pass; golden path confirmed | Test results (count + status) |
-| 3 | **Bug-fix** | Any test failure or visible defect | **≥ 3 rounds minimum** | All tests passing; no known defects |
+| 3 | **Bug-fix** | Any test failure or visible defect | **≥ 3 rounds (default; carve-out for <50 LOC)** | All tests passing; no known defects |
 | 4 | **Fresh-agent review** | Bug-fix done | Agent must have zero inherited context; receives spec + diff | Review findings list |
-| 5 | **Tighten** | Fresh-agent findings applied | **≥ 3 rounds minimum** | Refined, hardened code |
+| 5 | **Tighten** | Fresh-agent findings applied | **≥ 3 rounds (default; carve-out for <50 LOC)** | Refined, hardened code |
 | 6 | **Human gate** | Tightening done | Partner must approve; do not self-declare done | Partner approval |
 
 ## Loop diagram
@@ -125,7 +125,7 @@ Enter when there are test failures or known defects. (Note: Phase 3 rounds all t
 - **Round 2:** Run full suite again. Round-1 fixes often surface secondary failures. Fix those.
 - **Round 3:** Final run. If still failing, invoke `superpowers:systematic-debugging` to diagnose the root cause. After systematic-debugging identifies the issue, loop back to Round 1 with the new understanding. If the root cause reveals a fundamental misunderstanding of requirements, exit to Phase 0 (Research) instead. (Same decision point as the Phase 2 loop-back heuristic above.)
 
-Hard gate: run exactly 3 rounds regardless of when failures resolve. Do not exit after Round 1 even if no failures appear. Round 2 catches regressions from Round 1 fixes; Round 3 is the clean final confirmation run.
+**Default: 3 rounds.** Skip subsequent rounds only when all of: (a) the change touches <50 LOC, (b) the most recent round revealed no failures and no regressions, (c) you record the skip in the runlog with a one-line rationale. The default reflects that round 2 catches Round-1 regressions and round 3 confirms cleanly — most non-trivial changes benefit from all three; the carve-out keeps small fixes from becoming ceremony (per LESSON-002).
 
 Exit: 3 rounds completed, all tests passing.
 
@@ -175,7 +175,7 @@ Each round is **discrete** — apply only its category of changes, then re-run t
 - **Round 2 — Test quality only:** add missing edge cases, make assertions specific, fix fragile tests. No clarity or hardening changes in this round.
 - **Round 3 — Hardening only:** invalid input paths, external call failures, readable error messages, brief inline comments where non-obvious. No clarity or test changes in this round.
 
-Hard gate: complete all 3 discrete rounds even if Round 1 already feels clean. Re-run the full suite after each round. If a round's changes break previously-passing tests, fix those regressions within the current round before advancing to the next.
+**Default: 3 discrete rounds** (clarity, test quality, hardening). Re-run the full suite after each round; if a round's changes break previously-passing tests, fix those regressions within the current round before advancing. **Skip subsequent rounds only when all of: (a) the change touches <50 LOC, (b) the preceding round revealed nothing to tighten in the next category, (c) you record the skip in the runlog with a one-line rationale.** The default is right for most changes; the carve-out keeps small fixes from becoming ceremony (per LESSON-002).
 
 Exit: 3 rounds complete, no remaining known fragility.
 

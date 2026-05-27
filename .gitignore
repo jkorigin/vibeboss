@@ -21,20 +21,6 @@
 # Editor-specific launch configs (machine/project-specific, not framework canon)
 .claude/launch.json
 
-# Temporary backup created by reno.sh during session — restored on exit.
-.claude/settings.json.reno-bak
-
-# Build / dependency outputs (placeholders for Phase 1+)
-node_modules/
-dist/
-build/
-.next/
-.turbo/
-__pycache__/
-*.pyc
-.venv/
-venv/
-
 # Logs / scratch
 *.log
 tmp/

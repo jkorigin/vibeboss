@@ -20,7 +20,7 @@ Vibeboss separates "running the workspace" from "maintaining the framework." Two
 
 | Mode | Identity | cwd | Activated by | Job |
 |---|---|---|---|---|
-| **HQ runtime** | **Boss** | `vibeboss-workspace/hq/` | `cd <workspace>/hq && claude` | Daily venture-lead work — talks to partner, dispatches build leads (Banana / Carrot / Ginger / etc.), surfaces status. |
+| **HQ runtime** | **Boss** | `vibeboss-workspace/hq/` | `cd <workspace>/hq && claude` | Daily venture-lead work — talks to partner, dispatches build leads (Banana / Carrot / Ginger / etc. — illustrative; your install assigns names from the produce theme starting at `crew.yml`'s `next_available`), surfaces status. |
 | **Framework dev** | **Vibe Chief** | `vibeboss/` (this repo) | `bash reno.sh` from this dir | Maintain the framework — OSS canon, templates, init script, CHANGELOG, decisions, breaking-change discipline. |
 
 **If you accidentally `cd` to this repo and run `claude`,** the SessionStart hook here (`vibeboss/.claude/hooks/route.sh`) emits a polite redirect explaining the two paths. No identity is loaded until you pick one.

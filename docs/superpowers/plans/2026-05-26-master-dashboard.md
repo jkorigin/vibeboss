@@ -47,7 +47,7 @@ Tasks are grouped by dependency layer. Group N can start only after all tasks in
 1. `cd hq/dashboard && bun start` — must boot without error
 2. `curl -s http://127.0.0.1:3100/api/state | jq .` — must return JSON
 3. `curl -s http://127.0.0.1:3100/api/agents | jq '.[0].sessionId'` — must return a session ID
-4. `curl -s http://127.0.0.1:3100/api/projects | jq '.[0].name'` — must return "<example-project>" or similar
+4. `curl -s http://127.0.0.1:3100/api/projects | jq '.[0].name'` — must return a project name (e.g. `<project-name>`)
 5. WebSocket test via curl --no-buffer or wscat
 
 ### Group 5 — Bug-fix rounds (≥3, per dev-workflow)

@@ -29,7 +29,7 @@ The right answer is **(2) with a redirect for accidental cd's**, with the framew
 | Accidental cd to `vibeboss/` | None (redirect) | `vibeboss/` | `cd vibeboss && claude` without reno flag | `vibeboss/.claude/hooks/route.sh` reads `vibeboss/.claude/hooks/redirect.md` |
 
 **Roles:**
-- **Boss** owns the partner's runtime — talks to partner, dispatches build leads (Banana / Carrot / Ginger), surfaces status, never writes to `vibeboss/` source.
+- **Boss** owns the partner's runtime — talks to partner, dispatches build leads (Banana / Carrot / Ginger — illustrative crew names), surfaces status, never writes to `vibeboss/` source.
 - **Vibe Chief** owns the framework canon — writes to `vibeboss/` source, `templates/`, `decisions/`, `CHANGELOG.md`, `docs/`. Never writes to `vibeboss-workspace/`.
 - **Both** address partner as "partner" (LESSON-001).
 
@@ -40,7 +40,7 @@ The right answer is **(2) with a redirect for accidental cd's**, with the framew
 1. **Separation of concerns.** Boss is fast / build / partner-focused. Vibe Chief is careful / canon / OSS-user-focused. Different priorities, different memory routes, different disciplines.
 2. **Accident-tolerant.** A user who cd's to the wrong place gets corrected, not confused. The redirect message is the safety net.
 3. **Clear naming announces the mode.** Partner sees "Vibe Chief" in the boot banner and knows immediately they're not talking to runtime Boss. Reduces "wrong agent" mistakes.
-4. **Vibe Chief breaks the produce naming theme intentionally.** Produce names (Banana, Carrot, Ginger) are project-level build leads — the layer where Boss dispatches work. Vibe Chief is at a different layer entirely (framework, not partner-owned project). The name marks the layer change.
+4. **Vibe Chief breaks the produce naming theme intentionally.** Produce names (Banana, Carrot, Ginger — illustrative crew names) are project-level build leads — the layer where Boss dispatches work. Vibe Chief is at a different layer entirely (framework, not partner-owned project). The name marks the layer change.
 5. **One partner, no extra cognitive load.** Partner doesn't need to manage two relationships. Boss and Vibe Chief are two roles the *same* partner activates by command.
 
 ## Mechanism (technical)

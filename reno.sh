@@ -7,6 +7,7 @@
 # Usage:
 #   bash reno.sh                        # interactive Vibe Chief session
 #   bash reno.sh --help                 # show this
+#   bash reno.sh --version              # print framework version
 #
 # What it does:
 #   1. Resolves the Vibeboss source dir (where this script lives).
@@ -16,6 +17,8 @@
 #      SessionStart hook with the env var present — the hook routes to Vibe Chief.
 
 set -euo pipefail
+
+VIBEBOSS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
   cat <<'EOF'
@@ -34,7 +37,10 @@ EOF
   exit 0
 fi
 
-VIBEBOSS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ "${1:-}" = "--version" ] || [ "${1:-}" = "-v" ]; then
+  cat "$VIBEBOSS_DIR/VERSION"
+  exit 0
+fi
 
 # Sanity check we're actually at a Vibeboss source repo
 if [ ! -f "$VIBEBOSS_DIR/CHIEF.md" ] || [ ! -f "$VIBEBOSS_DIR/init.sh" ]; then
@@ -55,30 +61,6 @@ fi
 # Set the routing flag the SessionStart hook detects
 export VIBEBOSS_RENO=1
 
-# ── Portable hook path substitution ──────────────────────────────────────────
-# settings.json is committed with the placeholder "VIBEBOSS_DIR_PLACEHOLDER"
-# so it doesn't embed any machine-specific path. We substitute the real path
-# here, launch CC, then restore the placeholder so git stays clean.
-SETTINGS_FILE="$VIBEBOSS_DIR/.claude/settings.json"
-SETTINGS_BACKUP="$VIBEBOSS_DIR/.claude/settings.json.reno-bak"
-
-_restore_settings() {
-  if [ -f "$SETTINGS_BACKUP" ]; then
-    mv "$SETTINGS_BACKUP" "$SETTINGS_FILE"
-  fi
-}
-trap _restore_settings EXIT
-
-cp "$SETTINGS_FILE" "$SETTINGS_BACKUP"
-python3 - <<PYEOF
-import re
-with open("$SETTINGS_FILE") as f:
-    content = f.read()
-content = content.replace("VIBEBOSS_DIR_PLACEHOLDER", "$VIBEBOSS_DIR")
-with open("$SETTINGS_FILE", "w") as f:
-    f.write(content)
-PYEOF
-
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Booting Vibe Chief"
@@ -89,7 +71,7 @@ echo "Loading framework-dev discipline. The SessionStart hook will print"
 echo "Vibe Chief's boot brief on the first turn."
 echo ""
 
-# Launch CC (no exec — trap must fire after claude exits to restore settings).
+# Launch CC. settings.json uses ${CLAUDE_PROJECT_DIR} — no path substitution needed.
 claude
 
-# trap _restore_settings fires here on EXIT.
+# end of reno.sh

@@ -14,7 +14,7 @@ The crew system gives every partner-owned project a *named build lead* — a per
 
 ## Problem
 
-Vibeboss now has two active projects (<example-project>, master-dashboard) and one pending (labs). As spawned sessions multiply, Boss has no structured way to:
+Once a Vibeboss workspace has multiple active projects (illustrative: two partner-owned projects plus labs), spawned sessions multiply and Boss has no structured way to:
 
 1. Know which agent is currently "owning" a project.
 2. Route a task to the right identity.
@@ -33,9 +33,11 @@ Without a registry and naming convention, Boss defaults to ad-hoc spawn descript
 
 **Canonical mapping rule:** `next_available` in `crew.yml` is the authoritative next name. When a new agent is born, Boss assigns the `next_available` name, then updates `next_available` to the next unused vegetable name in alphabetical order. **Do not derive next_available by scanning agents[].** This avoids ambiguity when pre-reserved names appear out-of-order.
 
+Example assignments (illustrative — your install's `crew.yml` will differ):
+
 | Agent | Project | Role | Status |
 |---|---|---|---|
-| Banana | <example-project> | build lead | born |
+| Banana | `<project-name>` | build lead | born |
 | Carrot | master-dashboard | build lead | born |
 | Ginger | labs | build lead | pre-reserved (unborn) |
 | Dill | (next project) | TBD | next_available |
@@ -45,6 +47,8 @@ Without a registry and naming convention, Boss defaults to ad-hoc spawn descript
 ## Schema
 
 ### `crew.yml` (runtime, in `hq/`)
+
+Illustrative example — your install's `crew.yml` ships with empty `agents: []` and a fresh `next_available`:
 
 ```yaml
 operator:
@@ -69,7 +73,7 @@ naming_convention:
 
 agents:
   - name: Banana
-    project: <example-project>
+    project: <project-name>
     role: build lead
     born_at: "YYYY-MM-DD"
     current_session_id: null
@@ -212,11 +216,11 @@ hq/
 
 ## Boot-time crew presentation
 
-The boot brief adds an **Active crew** section after "Active projects":
+The boot brief adds an **Active crew** section after "Active projects" (illustrative example):
 
 ```
 Active crew:
-  Banana (<example-project>) — dormant
+  Banana (<project-name>) — dormant
   Carrot   (master-dashboard) — dormant
   [Ginger  (labs) — unborn]
 ```

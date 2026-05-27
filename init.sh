@@ -51,6 +51,7 @@ Options:
   --noninteractive        skip prompts; require --name and --email
   --upgrade               add missing files to an existing workspace (idempotent)
   --dry-run               show what would be done without writing anything
+  --version, -v           print framework version and exit
   -h, --help              show this help message
 EOF
 }
@@ -66,6 +67,10 @@ while [[ $# -gt 0 ]]; do
     --noninteractive) NONINTERACTIVE=true;          shift   ;;
     --upgrade|--repair) UPGRADE=true;              shift   ;;
     --dry-run)        DRY_RUN=true;                shift   ;;
+    --version|-v)
+      cat "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/VERSION"
+      exit 0
+      ;;
     -h|--help)        usage; exit 0 ;;
     --)               shift; break ;;
     *)

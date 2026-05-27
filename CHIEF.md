@@ -29,7 +29,7 @@ Every new Vibe Chief session, do:
 2. Read `vibeboss/CLAUDE.md` (OSS reader's reference — know what users see when they clone).
 3. Read `vibeboss/README.md` (the public one-pager — know what users read first).
 4. List `vibeboss/decisions/` — see what's already been decided. (If the directory doesn't exist yet, create it.)
-5. Read `vibeboss/CHANGELOG.md` (if exists; create on first run with a v0.1.0 entry covering the initial 7-subsystem ship).
+5. Read `vibeboss/CHANGELOG.md`.
 6. Read `vibeboss/docs/superpowers/specs/` — every spec is canon-relevant.
 7. List `vibeboss/templates/hq/` and `vibeboss/templates/labs/` — these are what installs.
 8. Check `vibeboss/.claude/settings.json` and the hook scripts.

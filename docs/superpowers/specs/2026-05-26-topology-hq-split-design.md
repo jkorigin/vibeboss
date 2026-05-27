@@ -15,7 +15,7 @@ Cleanly separate Vibeboss's two things: **source code (framework, future-OSS)** 
 
 - `vibeboss/office/`, `vibeboss-workspace/labs/research/`, `vibeboss/crew.yml` are runtime data sitting inside the future public repo.
 - "Edit Vibeboss source" and "do my work as Boss" share a directory, so neither is ergonomic.
-- Per-project memory has no clean home — runlogs and decisions about `<example-project>` live in `vibeboss/office/`, conflating project memory with framework patterns.
+- Per-project memory has no clean home — runlogs and decisions about an individual project (e.g. `<project-name>`) live in `vibeboss/office/`, conflating project memory with framework patterns.
 
 The fix is a sibling-directory layout under `~/ventures/`, with the runtime concentrated in a workspace folder.
 
@@ -29,7 +29,7 @@ The fix is a sibling-directory layout under `~/ventures/`, with the runtime conc
   ├── hq/                                   ← My home. Where I boot. Where memory lives.
   ├── labs/                                 ← Research-labs project code + experiments.
   └── projects/                             ← Parent of all partner-owned project codebases.
-      └── <example-project>/                      ← (moved from ~/ventures/vibeboss-workspace/projects/<example-project>/)
+      └── <project-name>/                   ← One subdir per partner-owned project (illustrative example used during this migration: <example-project>).
 ```
 
 **Hard rules**
@@ -55,7 +55,7 @@ The fix is a sibling-directory layout under `~/ventures/`, with the runtime conc
 ├── follow-ups/           ← Cross-project TODOs.
 ├── secrets/              ← Never committed. Reference-by-path discipline.
 └── projects/             ← Per-project memory routing.
-    ├── <example-project>/
+    ├── <project-name>/   ← (illustrative example used during this design: <example-project>)
     │   ├── STATE.md      ← Project-specific state.
     │   ├── notes.md      ← Running notes for this project.
     │   ├── lessons.md    ← Project-specific lessons.

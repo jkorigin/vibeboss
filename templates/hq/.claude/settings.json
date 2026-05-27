@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{HQ_PATH}}/.claude/hooks/boot.sh"
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/boot.sh"
           }
         ]
       },
@@ -15,7 +15,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{HQ_PATH}}/.claude/hooks/boot.sh"
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/boot.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/boot.sh"
           }
         ]
       },
@@ -24,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{HQ_PATH}}/.claude/hooks/compact-boot.sh"
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/compact-boot.sh"
           }
         ]
       }

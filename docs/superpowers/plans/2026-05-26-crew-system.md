@@ -12,9 +12,9 @@ All items are data/docs — no code compilation, tests are YAML parse validation
 
 ### Group 0 — Data files (parallel, independent)
 
-1. **`hq/crew.yml`** — extend with `naming_convention:` block + `agents:` entries for Banana, Carrot, Ginger.
+1. **`hq/crew.yml`** — extend with `naming_convention:` block + `agents:` entries (illustrative: Banana, Carrot, Ginger).
 2. **`vibeboss/crew.yml.template`** — new file; schema with `{{PLACEHOLDER}}` vars.
-3. **`hq/projects/<example-project>/inbox/`** — create 4 subdirs + READMEs.
+3. **`hq/projects/<project-name>/inbox/`** — create 4 subdirs + READMEs for each active project (illustrative example used during build: `<example-project>`).
 4. **`hq/projects/master-dashboard/inbox/`** — create 4 subdirs + READMEs.
 
 ### Group 1 — Documentation updates (after Group 0)
@@ -47,7 +47,7 @@ Go through spec DoD line by line. Each item must be true before writing the runl
 
 - crew.yml extended ✓
 - crew.yml.template created ✓
-- <example-project> inbox dirs created ✓
+- `<project-name>` inbox dirs created ✓ (illustrative: <example-project>)
 - master-dashboard inbox dirs created ✓
 - CLAUDE.md Crew section added ✓
 - CLAUDE.md boot sequence updated ✓

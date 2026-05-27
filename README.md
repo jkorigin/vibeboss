@@ -1,10 +1,10 @@
 # Vibeboss
 
-**The AI-as-Boss autonomous OS for vibe coders.**
+**A conventions + hooks pack for Claude Code that gives non-technical operators a memory-disciplined workspace where sessions auto-boot with state, lessons, crew, and inbox context.**
 
-Tell Vibeboss a goal. Walk away. Come back to it shipped.
+What ships today: a scaffolder (`init.sh`), a templates tree, SessionStart hooks, and a set of memory disciplines (runlog, STATE, decisions, LESSONS, inbox). What it does *not* yet ship: an autonomous runtime engine. That's Phase 1 — see [ROADMAP.md](ROADMAP.md).
 
-> *Skip permissions, approve all, goodnight* — but without the drift, with memory of every mistake, and surfacing only when it genuinely needs you.
+> *Skip permissions, approve all, goodnight* — but without the drift, with memory of every mistake, and surfacing only when it genuinely needs you. **(That's the goal. Today's cut delivers the memory and discipline scaffolding; the don't-stop loop and verification tooling arrive in Phase 1.)**
 
 ## Quick Start
 
@@ -34,24 +34,23 @@ That boots **Vibe Chief** — the framework caretaker. Vibe Chief is the agent w
 
 If you accidentally `cd` to this repo and run `claude` without `reno.sh`, you'll get a polite redirect pointing you back to your HQ workspace.
 
-**Prerequisites:** [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code), Python 3 (for the boot hooks), Bash 3.2+ (macOS/Linux).
+**Prerequisites:** [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code), Python 3 (for the boot hooks), Bash 3.2+ (macOS/Linux). Tested with recent Claude Code releases (2026-Q1+).
 
 ---
 
 ## Status
 
-**Phase 0 — Feasibility Investigation.** Not yet open source. Not yet a usable product. The dashboard vision is being validated against Claude Code's actual surface capabilities before any architecture is locked.
+**Phase 0 — Feasibility Investigation.** v0.1.0 is the first OSS-ready cut. The framework is installable and functions as a memory/discipline harness today; the runtime engine arrives in Phase 1. See [ROADMAP.md](ROADMAP.md) for what's coming.
 
-## What this will be
+## What ships today
 
-A small set of conventions + a runtime that turns Claude Code into an autonomous agent system non-technical operators can actually trust:
-
-- **State that survives every session** — STATE.md as canonical "where are we right now," runlog as append-only history, decisions as immutable choices
-- **Bugs that get fixed, not patched** — reproduce → locate → fix → verify → log, with no "fixed!" claims without verification
+- **State that survives every session** — STATE.md as canonical "where are we right now," runlog as append-only history, decisions as immutable choices in `decisions/YYYY-MM-DD-<slug>.md`
 - **Mistakes become guardrails** — every correction the operator gives turns into a LESSONS hard gate that fires at decision-time, not just a hint in memory
-- **Don't-stop loops with a kill switch** — autonomous chain hops via async spawn; drop a STOP file to halt cleanly
-- **Main / Builder / Research separation** — the agent that talks to you doesn't build; it delegates to a builder, and researches when it's unsure rather than asking you
-- **Non-technical dashboard** *(if feasibility says yes)* — see all your sessions, jump into any one, watch from above
+- **Inbox protocol** — operator drop-zone (`hq/projects/<name>/inbox/{requests,chats,todos,processed}/`) Boss scans on every boot and surfaces
+- **Auto-boot + compact-handover hooks** — SessionStart hook injects boot brief on every fresh/resumed session; pre-`/compact` ritual writes a structured handover that the post-compact hook re-injects. Session never closes; partner never types `boot`.
+- **Crew system** — per-project named build leads (Banana, Carrot, Ginger, etc.) registered in `hq/crew.yml`. Boss dispatches via inbox (async) or `claude --session-id` (sync). Naming theme: produce.
+
+For what's planned but not yet built (autonomous loop, verification tooling, Main/Builder/Research separation, OSS dashboard scaffold), see [ROADMAP.md](ROADMAP.md).
 
 ## What this will NOT be
 

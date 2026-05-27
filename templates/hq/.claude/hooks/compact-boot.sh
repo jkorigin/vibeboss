@@ -7,10 +7,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HQ="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Extract additionalContext from boot.sh's JSON output
-BOOT_BRIEF="$(bash "$SCRIPT_DIR/boot.sh" 2>/dev/null \
-  | python3 -c "import json, sys; print(json.load(sys.stdin)['hookSpecificOutput']['additionalContext'])" \
-  2>/dev/null || true)"
+# Get the boot brief as plain text (--brief-only skips the JSON wrap)
+BOOT_BRIEF="$(bash "$SCRIPT_DIR/boot.sh" --brief-only 2>/dev/null || true)"
 [ -z "$BOOT_BRIEF" ] && BOOT_BRIEF="(boot brief unavailable)"
 
 # Find most-recently-modified handover *.md (not README, case-insensitive) in hq/handovers/

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "VIBEBOSS_DIR_PLACEHOLDER/.claude/hooks/route.sh"
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/route.sh"
           }
         ]
       },
@@ -15,7 +15,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "VIBEBOSS_DIR_PLACEHOLDER/.claude/hooks/route.sh"
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/route.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/route.sh"
           }
         ]
       }

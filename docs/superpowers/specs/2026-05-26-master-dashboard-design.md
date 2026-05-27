@@ -96,7 +96,7 @@ hq/dashboard/
 1. `bun start` boots without error on port 3100
 2. Sessions pane shows this spawn's own session (or any live session)
 3. Activity stream shows new JSONL lines within ~3s of them being written
-4. Projects pane shows <example-project> STATE.md excerpt
+4. Projects pane shows a `<project-name>` STATE.md excerpt (illustrative example)
 5. HQ state pane shows current STATE.md content
 6. WebSocket reconnects on disconnect
 7. All smoke tests pass: `/api/state`, `/api/agents`, `/api/projects`, `WS /ws`

@@ -3,6 +3,12 @@
 # Emits JSON for CC SessionStart hook: hookSpecificOutput.additionalContext
 set -euo pipefail
 
+# Arg parsing: --brief-only emits plain text brief, no JSON wrapper
+BRIEF_ONLY=false
+if [ "${1:-}" = "--brief-only" ]; then
+  BRIEF_ONLY=true
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HQ="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
@@ -70,30 +76,77 @@ PROJECTS_DISPLAY="${PROJECTS_DISPLAY%$'\n'}"
 
 # Crew: parse crew.yml agents block
 # Unborn agents shown in brackets per CLAUDE.md convention
+# Fields parsed in ANY order: name, project, born_at, current_session_id
 CREW_DISPLAY=""
 if [ -f "$HQ/crew.yml" ]; then
-  CREW_DISPLAY="$(awk '
-    /^agents:/{in_agents=1; next}
-    in_agents && /^[a-zA-Z]/{in_agents=0}
-    in_agents && /^  - name:/{
-      split($0, a, /: /); name=a[2]; gsub(/"/, "", name)
-    }
-    in_agents && /^    project:/{
-      split($0, a, /: /); proj=a[2]; gsub(/"/, "", proj)
-    }
-    in_agents && /^    born_at:/{
-      split($0, a, /: /); ba=a[2]; gsub(/"/, "", ba)
-    }
-    in_agents && /^    current_session_id:/{
-      split($0, a, /: /); cs=a[2]; gsub(/"/, "", cs)
-      if (ba == "null")
-        printf "  - [%s] (%s) \342\200\224 unborn\n", name, proj
-      else if (cs == "null")
-        printf "  - %s (%s) \342\200\224 dormant\n", name, proj
-      else
-        printf "  - %s (%s) \342\200\224 active \342\200\224 session %s\n", name, proj, cs
-    }
-  ' "$HQ/crew.yml" 2>/dev/null)"
+  CREW_DISPLAY="$(CREW_YML="$HQ/crew.yml" python3 - <<'PYEOF'
+import os, re
+
+path = os.environ["CREW_YML"]
+try:
+    with open(path, "r") as f:
+        lines = f.read().splitlines()
+except OSError:
+    raise SystemExit(0)
+
+def strip_quotes(s):
+    s = s.strip()
+    if len(s) >= 2 and s[0] == s[-1] and s[0] in ('"', "'"):
+        s = s[1:-1]
+    return s
+
+agents = []
+current = None
+in_agents = False
+
+for line in lines:
+    if re.match(r'^agents:\s*$', line):
+        in_agents = True
+        continue
+    if not in_agents:
+        continue
+    # Exit block on a new top-level key (non-indented alpha line)
+    if re.match(r'^[A-Za-z]', line):
+        in_agents = False
+        continue
+    # New agent entry
+    m = re.match(r'^\s*-\s*name:\s*(.*)$', line)
+    if m:
+        if current is not None:
+            agents.append(current)
+        current = {"name": strip_quotes(m.group(1))}
+        continue
+    if current is None:
+        continue
+    # Any other "key: value" line within current agent
+    m = re.match(r'^\s+([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$', line)
+    if m:
+        key = m.group(1)
+        val = strip_quotes(m.group(2))
+        if key in ("project", "born_at", "current_session_id"):
+            current[key] = val
+
+if current is not None:
+    agents.append(current)
+
+EM = "—"
+out_lines = []
+for a in agents:
+    name = a.get("name", "")
+    proj = a.get("project", "")
+    ba = a.get("born_at", "null")
+    cs = a.get("current_session_id", "null")
+    if ba == "null":
+        out_lines.append(f"  - [{name}] ({proj}) {EM} unborn")
+    elif cs == "null":
+        out_lines.append(f"  - {name} ({proj}) {EM} dormant")
+    else:
+        out_lines.append(f"  - {name} ({proj}) {EM} active {EM} session {cs}")
+
+if out_lines:
+    print("\n".join(out_lines))
+PYEOF
+  )"
 fi
 [ -z "$CREW_DISPLAY" ] && CREW_DISPLAY="  none"
 
@@ -149,6 +202,12 @@ ${NEXT_ITEMS}
 ${CLOSING}
 BRIEF_EOF
 )"
+
+# If --brief-only, emit plain text and exit (used by compact-boot.sh)
+if [ "$BRIEF_ONLY" = "true" ]; then
+  printf '%s\n' "$BRIEF"
+  exit 0
+fi
 
 # Emit JSON — pass brief via env var so Python json.dumps handles all escaping
 BRIEF_CONTENT="$BRIEF" python3 - <<'PYEOF'
