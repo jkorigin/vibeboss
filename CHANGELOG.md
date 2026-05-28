@@ -33,7 +33,7 @@ The v0.2.4 Stop-hook compact-handover design failed the keyword-test acceptance 
 
 ### Rationale
 
-The Stop-hook approach (shipped in v0.2.4 commit `f5ec386`) failed for four compounding reasons: (1) `_current.md` overwritten every turn → keywords from earlier in the session displaced by topic drift; (2) `compact-boot.sh` mtime-newest selection meant the rich dated handover (where the keyword lived) lost to the just-touched rolling file; (3) marker regex too narrow to catch partner content without `KEYWORD:` literal prefix; (4) structural — Stop hook running in the post-compact session sees only post-compact transcript content, so the pre-compact turn (where the keyword lived) is gone before grep even runs.
+The Stop-hook approach (shipped in v0.2.4 commit `74ff817`) failed for four compounding reasons: (1) `_current.md` overwritten every turn → keywords from earlier in the session displaced by topic drift; (2) `compact-boot.sh` mtime-newest selection meant the rich dated handover (where the keyword lived) lost to the just-touched rolling file; (3) marker regex too narrow to catch partner content without `KEYWORD:` literal prefix; (4) structural — Stop hook running in the post-compact session sees only post-compact transcript content, so the pre-compact turn (where the keyword lived) is gone before grep even runs.
 
 PreCompact + pinned/rolling closes all four: PreCompact runs at the boundary with the full session still in the transcript; pinned handovers are immune to mtime displacement; widened regex + quoted-phrase capture surfaces a broader set of partner emphasis patterns; the hook sees the pre-compact transcript directly. Verified live 2026-05-28 — partner's keyword `cat climb clock tower dog run stairs eagle beats the eye` survived `/compact` and led the post-compact response verbatim.
 
@@ -94,7 +94,7 @@ Compact handover converted from self-discipline ("agent remembers to write hando
 
 ### Changed
 
-- **`templates/hq/CLAUDE.md`** — "Compact handover" section rewritten: was framed as agent self-discipline with triggers T1-T5, now framed as "Stop hook + compact-boot.sh working together with zero discipline as baseline; rich dated handovers as optional override layer". The five triggers are reframed as opt-in moments for the rich layer, not as gates the agent must self-recognize. (Landed early — bundled into commit 28dab5a inadvertently when Boss and Vibe Chief edited CLAUDE.md in parallel sessions.)
+- **`templates/hq/CLAUDE.md`** — "Compact handover" section rewritten: was framed as agent self-discipline with triggers T1-T5, now framed as "Stop hook + compact-boot.sh working together with zero discipline as baseline; rich dated handovers as optional override layer". The five triggers are reframed as opt-in moments for the rich layer, not as gates the agent must self-recognize. (Landed early — bundled into commit 396b596 inadvertently when Boss and Vibe Chief edited CLAUDE.md in parallel sessions.)
 - **`VERSION`** bumped to `0.2.4-dev`.
 
 ### Rationale
