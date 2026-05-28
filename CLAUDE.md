@@ -16,14 +16,14 @@ Inspired by patterns developed in the realm of `~/ventures/<other-project>/`-sty
 
 ## The two modes — Boss and Vibe Chief
 
-Vibeboss separates "running the workspace" from "maintaining the framework." Two different agent identities, activated by where (and how) you start a Claude Code session.
+Vibeboss separates "running the workspace" from "maintaining the framework." Two different agent identities, activated by where (and how) you start an agent session. Claude Code is the native runtime; Codex is supported through `AGENTS.md` plus `.codex/hooks.json` mirrors of the same boot contexts.
 
 | Mode | Identity | cwd | Activated by | Job |
 |---|---|---|---|---|
-| **HQ runtime** | **Boss** | `vibeboss-workspace/hq/` | `cd <workspace>/hq && claude` | Daily venture-lead work — talks to partner, dispatches build leads (Banana / Carrot / Ginger / etc. — illustrative; your install assigns names from the produce theme starting at `crew.yml`'s `next_available`), surfaces status. |
-| **Framework dev** | **Vibe Chief** | `vibeboss/` (this repo) | `bash reno.sh` from this dir | Maintain the framework — OSS canon, templates, init script, CHANGELOG, decisions, breaking-change discipline. |
+| **HQ runtime** | **Boss** | `vibeboss-workspace/hq/` | Claude Code: `cd <workspace>/hq && claude`. Codex: open/run Codex from `<workspace>/hq/`. | Daily venture-lead work — talks to partner, dispatches build leads (Banana / Carrot / Ginger / etc. — illustrative; your install assigns names from the produce theme starting at `crew.yml`'s `next_available`), surfaces status. |
+| **Framework dev** | **Vibe Chief** | `vibeboss/` (this repo) | Claude Code: `bash reno.sh` from this dir. Codex: open/run Codex from this source root. | Maintain the framework — OSS canon, templates, init script, CHANGELOG, decisions, breaking-change discipline. |
 
-**If you accidentally `cd` to this repo and run `claude`,** the SessionStart hook here (`vibeboss/.claude/hooks/route.sh`) emits a polite redirect explaining the two paths. No identity is loaded until you pick one.
+**If you accidentally `cd` to this repo and run `claude`,** the SessionStart hook here (`vibeboss/.claude/hooks/route.sh`) emits a polite redirect explaining the two paths. In Codex, source-root sessions are treated as framework-dev sessions because there is no `reno.sh` wrapper; the tracked `.codex/` hook loads `CHIEF.md` when trusted, and `AGENTS.md` gives Codex the framework reference even if hooks are unavailable.
 
 **Almost all daily work is HQ-mode (Boss).** Vibe Chief is only for the rare moment you're improving the framework itself.
 
@@ -36,7 +36,7 @@ See [`CHIEF.md`](CHIEF.md) for Vibe Chief's full boot brief and discipline.
 3. **Decisions discipline** — non-trivial choices land as immutable `YYYY-MM-DD-<slug>.md` decision files. Supersession via new files, never overwrite.
 4. **LESSONS as hard-gates** — operator corrections become structural rules re-read at the top of every session. Violation gets logged; repeat violations indicate the rule wording needs revision.
 5. **Crew system** — per-project named build leads (Banana, Carrot, Ginger, etc.) registered in `hq/crew.yml`. Boss dispatches. Inbox protocol (`hq/projects/<name>/inbox/`) for async work; spawn protocol (`claude --session-id`) for sync work. Naming theme: **produce** (vegetables / fruits / herbs).
-6. **Auto-boot** — SessionStart hook in `hq/.claude/settings.json` fires on every fresh/resumed session; partner never types `boot`.
+6. **Auto-boot** — SessionStart hooks in `hq/.claude/settings.json` and `hq/.codex/hooks.json` fire on every fresh/resumed session when supported/trusted; `hq/AGENTS.md` carries the same manual fallback. Partner never types `boot` in the normal path.
 7. **Compact handover** — pre-`/compact` ritual writes a structured handover file; post-compact hook (`compact-boot.sh`) injects it as additional context. Session never closes.
 8. **Inbox protocol** — operator drop-zone with `requests/`, `chats/`, `todos/`, `processed/` subfolders. On every boot the agent surfaces new items.
 9. **Brand discipline** — internal docs may be technical; anything destined for the public release is non-business-internal and uses product-native vocabulary.
@@ -61,6 +61,7 @@ vibeboss/                            ← OSS source. Apache 2.0. Framework only.
 │   └── hooks/
 │       ├── route.sh                 ← routes to Vibe Chief or redirect based on $VIBEBOSS_RENO
 │       └── redirect.md              ← polite redirect for accidental cd's here
+├── .codex/                          ← Codex SessionStart hook; loads CHIEF.md in source-root sessions
 ├── templates/                       ← scaffold trees init.sh writes to vibeboss-workspace/
 │   ├── hq/
 │   └── labs/
@@ -94,7 +95,7 @@ Not yet open to external contribution. This boundary will move when Phase 2 land
 bash init.sh
 ```
 
-That scaffolds `~/ventures/vibeboss-workspace/{hq,labs,projects}/`, lets you customize a few things (your name, lead's name, what the lead calls you), and points you to the next command. From then on, all your work happens in `vibeboss-workspace/hq/` — that's where Boss lives.
+That scaffolds `~/ventures/vibeboss-workspace/{hq,labs,projects}/`, lets you customize a few things (your name, lead's name, what the lead calls you), and points you to the next command. From then on, all your work happens in `vibeboss-workspace/hq/` — that's where Boss lives. Claude Code reads `CLAUDE.md` and `.claude/`; Codex reads `AGENTS.md` and `.codex/`.
 
 **If you cloned this repo to *enhance* Vibeboss itself** (fix a bug, ship a feature to the framework):
 
@@ -102,6 +103,6 @@ That scaffolds `~/ventures/vibeboss-workspace/{hq,labs,projects}/`, lets you cus
 bash reno.sh
 ```
 
-That boots Vibe Chief — the framework caretaker. Vibe Chief is OSS-careful, version-aware, and writes to `decisions/`, `CHANGELOG.md`, `templates/`, `docs/`.
+That boots Vibe Chief — the framework caretaker — in Claude Code. In Codex, open/run Codex from this source root; `AGENTS.md` plus `.codex/hooks.json` provide the framework-dev context. Vibe Chief is OSS-careful, version-aware, and writes to `decisions/`, `CHANGELOG.md`, `templates/`, `docs/`.
 
 Daily HQ work is Boss. Framework enhancement is Vibe Chief. Same partner, different discipline, different cwd.

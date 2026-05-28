@@ -8,8 +8,9 @@ framework has — they keep `init.sh` honest.
 End-to-end smoke test for `bash init.sh`. Runs the installer against a temp
 workspace in noninteractive mode, then verifies:
 
-- The expected HQ files exist (`CLAUDE.md`, `lessons.md`, `crew.yml`, `STATE.md`,
-  `.claude/settings.json`, hooks).
+- The expected HQ files exist (`CLAUDE.md`, `AGENTS.md`, `lessons.md`,
+  `crew.yml`, `STATE.md`, `.claude/settings.json`, `.codex/hooks.json`,
+  hooks).
 - The expected Labs files exist (`README.md`, `crew.yml`, `STATE.md`).
 - The workspace-root redirect hook is installed.
 - Hook scripts (`boot.sh`, `compact-boot.sh`, `redirect.sh`) are executable.

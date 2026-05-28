@@ -69,13 +69,22 @@ fi
 
 # ─── Verify expected files exist ─────────────────────────────────────────────
 check_file "$TMPWS/hq/CLAUDE.md"
+check_file "$TMPWS/AGENTS.md"
+check_file "$TMPWS/hq/AGENTS.md"
+check_file "$TMPWS/labs/AGENTS.md"
 check_file "$TMPWS/hq/lessons.md"
 check_file "$TMPWS/hq/crew.yml"
 check_file "$TMPWS/hq/STATE.md"
 check_file "$TMPWS/hq/.claude/settings.json"
 check_exec "$TMPWS/hq/.claude/hooks/boot.sh"
 check_exec "$TMPWS/hq/.claude/hooks/compact-boot.sh"
-check_exec "$TMPWS/hq/.claude/hooks/update-handover.sh"
+check_exec "$TMPWS/hq/.claude/hooks/pre-compact.sh"
+check_file "$TMPWS/.codex/hooks.json"
+check_exec "$TMPWS/.codex/hooks/redirect.sh"
+check_file "$TMPWS/hq/.codex/hooks.json"
+check_exec "$TMPWS/hq/.codex/hooks/boot.sh"
+check_exec "$TMPWS/hq/.codex/hooks/compact-boot.sh"
+check_exec "$TMPWS/hq/.codex/hooks/pre-compact.sh"
 check_file "$TMPWS/hq/skills/dev-workflow/SKILL.md"
 check_file "$TMPWS/hq/skills/compact-handover/SKILL.md"
 check_file "$TMPWS/labs/README.md"
@@ -99,6 +108,39 @@ if [ -x "$TMPWS/hq/.claude/hooks/boot.sh" ]; then
   fi
 else
   fail "boot hook missing or not executable; cannot validate JSON"
+fi
+
+# Codex hook mirrors should emit the same additionalContext contract.
+if [ -x "$TMPWS/hq/.codex/hooks/boot.sh" ]; then
+  set +e
+  CODEX_BOOT_OUT="$("$TMPWS/hq/.codex/hooks/boot.sh" 2>/dev/null)"
+  CODEX_BOOT_STATUS=$?
+  set -e
+  if [ "$CODEX_BOOT_STATUS" -ne 0 ]; then
+    fail "Codex boot hook exited with status $CODEX_BOOT_STATUS"
+  else
+    if ! printf '%s' "$CODEX_BOOT_OUT" | python3 -c "import json,sys; d=json.load(sys.stdin); assert 'additionalContext' in d['hookSpecificOutput']; print('codex boot hook JSON ok')"; then
+      fail "Codex boot hook did not emit valid JSON with hookSpecificOutput.additionalContext"
+    fi
+  fi
+else
+  fail "Codex boot hook missing or not executable; cannot validate JSON"
+fi
+
+if [ -x "$TMPWS/.codex/hooks/redirect.sh" ]; then
+  set +e
+  CODEX_REDIRECT_OUT="$("$TMPWS/.codex/hooks/redirect.sh" 2>/dev/null)"
+  CODEX_REDIRECT_STATUS=$?
+  set -e
+  if [ "$CODEX_REDIRECT_STATUS" -ne 0 ]; then
+    fail "Codex workspace redirect hook exited with status $CODEX_REDIRECT_STATUS"
+  else
+    if ! printf '%s' "$CODEX_REDIRECT_OUT" | python3 -c "import json,sys; d=json.load(sys.stdin); assert 'additionalContext' in d['hookSpecificOutput']; print('codex redirect hook JSON ok')"; then
+      fail "Codex workspace redirect hook did not emit valid JSON with hookSpecificOutput.additionalContext"
+    fi
+  fi
+else
+  fail "Codex workspace redirect hook missing or not executable; cannot validate JSON"
 fi
 
 # ─── Verify no `{{...}}` placeholders remain in generated markdown ───────────
@@ -135,6 +177,7 @@ if [ "$ADDPROJ_STATUS" -ne 0 ]; then
 else
   # Project tree shape
   check_file "$TMPWS/hq/projects/smoke-proj/STATE.md"
+  check_file "$TMPWS/hq/projects/smoke-proj/AGENTS.md"
   check_file "$TMPWS/hq/projects/smoke-proj/README.md"
   check_file "$TMPWS/hq/projects/smoke-proj/crew.yml"
   check_file "$TMPWS/hq/projects/smoke-proj/inbox/README.md"
@@ -167,6 +210,10 @@ else
   if [ -n "$PROJ_PLACEHOLDERS" ]; then
     fail "unresolved {{...}} placeholders in scaffolded project:"$'\n'"$PROJ_PLACEHOLDERS"
   fi
+
+  # Simulate a project created before Codex compatibility shipped. The later
+  # --update pass should backfill project-level AGENTS.md from the project README.
+  rm -f "$TMPWS/hq/projects/smoke-proj/AGENTS.md"
 fi
 
 # ─── STOP-file kill switch test ──────────────────────────────────────────────
@@ -253,6 +300,8 @@ if [ "$SOURCE_VERSION" != "$WS_VERSION_AFTER" ]; then
   fail "after --update, workspace version ($WS_VERSION_AFTER) != source ($SOURCE_VERSION)"
 fi
 
+check_file "$TMPWS/hq/projects/smoke-proj/AGENTS.md"
+
 # Banner should be gone now
 set +e
 POSTUPDATE_OUT="$("$TMPWS/hq/.claude/hooks/boot.sh" --brief-only 2>/dev/null)"
@@ -331,6 +380,37 @@ fi
 # Command-form banner should NOT be present (regression guard)
 if grep -q 'Run `bash.*init.sh --update' "$TMPWS/hq/.claude/hooks/boot.sh" 2>/dev/null; then
   fail "boot.sh still emits command-form update banner (regression — should be verbal)"
+fi
+
+# ─── v0.2.6: PreCompact handover mechanism (validation gate from Boss's spec) ─
+echo "Testing v0.2.6 PreCompact handover mechanism..."
+
+# pre-compact.sh exists and is executable (already checked above via check_exec)
+# Verify settings.json has PreCompact block with both matchers
+if ! grep -q '"PreCompact"' "$TMPWS/hq/.claude/settings.json" 2>/dev/null; then
+  fail "settings.json missing PreCompact hook block"
+fi
+if ! grep -q '"matcher": "auto"' "$TMPWS/hq/.claude/settings.json" 2>/dev/null; then
+  fail "settings.json missing PreCompact 'auto' matcher"
+fi
+if ! grep -q '"matcher": "manual"' "$TMPWS/hq/.claude/settings.json" 2>/dev/null; then
+  fail "settings.json missing PreCompact 'manual' matcher"
+fi
+
+# Stop block should NOT exist anymore (regression guard)
+if grep -q '"Stop"' "$TMPWS/hq/.claude/settings.json" 2>/dev/null; then
+  fail "settings.json still has Stop hook block (regression — superseded by PreCompact)"
+fi
+
+# _pinned/ directory and README exist
+check_file "$TMPWS/hq/handovers/_pinned/README.md"
+if [ ! -d "$TMPWS/hq/handovers/_pinned" ]; then
+  fail "missing directory: hq/handovers/_pinned/"
+fi
+
+# update-handover.sh should NOT exist anymore (regression guard)
+if [ -f "$TMPWS/hq/.claude/hooks/update-handover.sh" ]; then
+  fail "update-handover.sh still exists (regression — superseded by pre-compact.sh)"
 fi
 
 # ─── Report ──────────────────────────────────────────────────────────────────

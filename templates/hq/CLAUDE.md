@@ -35,7 +35,7 @@ If the SessionStart hook did NOT fire (additionalContext missing or empty), manu
 
 ## Boot sequence
 
-**The boot brief fires automatically** via the `SessionStart` hook (`hq/.claude/hooks/boot.sh`). On every fresh or resumed session in `hq/`, {{LEAD_NAME}} receives the brief as `additionalContext` before the first turn — {{OPERATOR_ADDRESSED_AS}} never needs to type `boot`. After receiving the auto-brief, {{LEAD_NAME}} reads `lessons.md` and any deeper context the brief flags as needed.
+**The boot brief fires automatically** via the `SessionStart` hook when hook execution is available/trusted. Claude Code uses `hq/.claude/hooks/boot.sh`; Codex uses `hq/.codex/hooks/boot.sh`, a thin wrapper around the same canonical script. On every fresh or resumed session in `hq/`, {{LEAD_NAME}} receives the brief as `additionalContext` before the first turn — {{OPERATOR_ADDRESSED_AS}} never needs to type `boot` in the normal path. After receiving the auto-brief, {{LEAD_NAME}} reads `lessons.md` and any deeper context the brief flags as needed.
 
 If the hook is unavailable or {{OPERATOR_ADDRESSED_AS}} types `boot` manually, execute the full boot sequence:
 
@@ -216,23 +216,36 @@ When in doubt: speak less about the command, more about the result. {{OPERATOR_A
 
 ---
 
-## Compact handover — mechanism-driven, not self-discipline
+## Compact handover — PreCompact hook + pinned/rolling split
 
-Handover survives `/compact` (and Claude Code's auto-compact at ~100% context) via **two hooks working together**, with zero agent self-discipline required as the baseline.
+Handover survives `/compact` (and Claude Code's auto-compact at ~100% context) via **two hooks + a pinned/rolling directory split**, with zero agent self-discipline required as the baseline.
 
 **The mechanism:**
-1. **`Stop` hook** (`hq/.claude/hooks/update-handover.sh`) fires every time the assistant finishes a turn. It parses the live transcript and rewrites `hq/handovers/_current.md` with the latest partner message, the agent's last response (truncated), and any `KEYWORD:` / `REMEMBER:` / `TODO:` / `PARTNER ASK:` / `DON'T FORGET:` / `IMPORTANT:` markers grepped from the session. So at any moment, `_current.md` is at most one turn stale.
-2. **`SessionStart matcher="compact"` hook** (`hq/.claude/hooks/compact-boot.sh`) fires after compaction completes. It picks the newest handover file < 60 minutes old (`_current.md` is always newest because the Stop hook just touched it) and injects it as `additionalContext`. The post-compact agent boots with the keyword/context intact.
 
-**Layered rich handover (optional):** When {{LEAD_NAME}} wants to capture something richer than the rolling auto-handover — a milestone shipping, a multi-day plan crystallizing, a critical decision — write a dated handover at `hq/handovers/YYYY-MM-DD-HHMM-<slug>.md`. Because `compact-boot.sh` picks the newest file, a freshly-written dated handover takes precedence over `_current.md` until 60 minutes elapse. After that, the rolling baseline takes over again.
+1. **`PreCompact` hook** (`hq/.claude/hooks/pre-compact.sh`) fires AT the moment of compaction (both `auto` triggers from CC's context limit and `manual` from `{{OPERATOR_ADDRESSED_AS}}` running `/compact`). With the full pre-compact transcript still available, it captures the last 8 partner turns verbatim + last 3 agent turns truncated + marker grep across the full session, and writes `hq/handovers/_current.md`. Idempotent, exits 0 on any error so it can never block compaction.
+2. **`SessionStart matcher="compact"` hook** (`hq/.claude/hooks/compact-boot.sh`) fires after compaction completes. It composes the post-compact `additionalContext`: boot brief → all `hq/handovers/_pinned/*.md` (sorted by filename) → `hq/handovers/_current.md` → a RESUME PROTOCOL block.
 
-**Triggers for the optional rich handover:**
-- T1: a milestone just shipped and the next session needs to know the new ground truth
-- T2: a critical decision was made mid-session that markers alone can't convey
-- T3: {{OPERATOR_ADDRESSED_AS}} explicitly signals "save context for next session"
-- T4: {{LEAD_NAME}} self-perceives recall gaps that the rolling format doesn't capture
+**Pinned vs rolling — the directory split that matters:**
 
-**Skill:** `hq/skills/compact-handover/SKILL.md` (for the rich-handover format)
+- **`hq/handovers/_pinned/*.md`** — durable. Survives multiple compacts. Agent or partner writes these for content that must NOT be displaced by topic drift: keywords, test phrases, hard decisions, identity reminders, instructions-to-say-verbatim. No automatic mechanism populates this directory — pinning is an explicit decision.
+- **`hq/handovers/_current.md`** — rolling. Overwritten at every compact by the PreCompact hook. Captures the just-compacted session's snapshot.
+
+`compact-boot.sh` injects **pinned first**, then rolling. Pinned content surfaces before topic-of-the-moment content from the rolling snapshot — large-context models read top-down, so this ordering defeats keyword-displacement.
+
+**When to write a pinned handover ({{LEAD_NAME}} or {{OPERATOR_ADDRESSED_AS}}):**
+
+- A keyword or test phrase that must be returned verbatim on the next session's first response.
+- A hard decision crystallized mid-session that markers alone can't convey.
+- An identity reminder ("I am {{LEAD_NAME}}, partner is {{OPERATOR_ADDRESSED_AS}}, project X is the current focus") if a long autonomous chain is about to launch.
+- A "don't forget" — anything {{OPERATOR_ADDRESSED_AS}} explicitly says must persist.
+
+Filename convention: `hq/handovers/_pinned/YYYY-MM-DD-HHMM-<slug>.md`.
+
+**The agent does nothing to maintain `_current.md`.** That's PreCompact's job — fires automatically at compact moment, writes the snapshot.
+
+**Skill:** `hq/skills/compact-handover/SKILL.md` (rich-format reference + when-to-pin guidance).
+
+**History:** v0.2.4 first attempt used a `Stop` hook (every turn) writing to `_current.md`. That design failed the keyword-test acceptance gate on the same day it shipped — `_current.md` was overwritten by topic drift before compact fired; `compact-boot.sh`'s mtime-newest selection lost the rich handover to the rolling file. The PreCompact + pinned/rolling design (v0.2.6) passed live. See `decisions/2026-05-28-precompact-handover-mechanism.md` for the full diagnosis + replacement.
 
 ---
 

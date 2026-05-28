@@ -65,3 +65,15 @@ Acceptance gate: at next auto-compact, post-compact session must surface the key
 
 - Consider adding the same Stop hook to `templates/projects/_per_project/.claude/` so build-lead spawns (Banana, Carrot, Ginger, etc.) get the same rolling-handover guarantee. Deferred until first time a build lead loses context across a compact.
 - If the marker-grep heuristic misses important content in practice, consider invoking `claude -p` from inside the Stop hook to produce an LLM-summarized rolling handover. Current heuristic is deliberately deterministic and zero-cost.
+
+## Superseded 2026-05-28 (same day)
+
+**Status now:** Superseded. The Stop-hook approach described above failed the keyword-test acceptance gate on the very same day it shipped. Three compounding failure modes were diagnosed in live testing:
+
+1. `_current.md` overwritten every turn → keywords introduced mid-session get displaced by topic drift before compact fires.
+2. `compact-boot.sh` picks newest file by mtime → the rich dated handover (where the keyword lived) lost to the just-touched rolling file.
+3. Marker regex required `KEYWORD:` literal prefix → partner's natural phrasing slipped past.
+
+Plus a structural issue: a Stop hook running in the *post*-compact session sees only post-compact transcript content. The pre-compact transcript (where the keyword turn lived) is gone.
+
+See `decisions/2026-05-28-precompact-handover-mechanism.md` for the replacement design (PreCompact hook + pinned/rolling separation) and the verified-live keyword-test pass.

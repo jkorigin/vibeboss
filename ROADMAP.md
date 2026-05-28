@@ -6,6 +6,21 @@ For what *is* shipped today, see [README.md](README.md#what-ships-today) and [CH
 
 ---
 
+## Recently shipped (v0.2.6)
+
+PreCompact handover mechanism — supersedes v0.2.4's Stop-hook design which failed the keyword-test acceptance gate same-day it shipped. Boss diagnosed the failure modes, designed + verified the replacement live, filed the port spec via the v0.2.3 framework-feedback channel; Vibe Chief ported into canon. See [decisions/2026-05-28-precompact-handover-mechanism.md](decisions/2026-05-28-precompact-handover-mechanism.md).
+
+- **`templates/hq/.claude/hooks/pre-compact.sh`** — fires AT compaction (auto + manual), captures last 8 partner turns verbatim + last 3 agent turns + widened marker grep across full session.
+- **Codex compatibility pass** — fresh installs now scaffold `AGENTS.md` at workspace root, HQ, labs, and projects; source/HQ/workspace-root `.codex/hooks.json` mirrors the Claude boot/redirect contexts. Verified by `tests/init-smoke.sh`. See [decisions/2026-05-28-codex-compatibility.md](decisions/2026-05-28-codex-compatibility.md).
+- **Pinned/rolling separation** — `_pinned/*.md` (durable, agent-or-partner-written) vs `_current.md` (rolling, PreCompact-written). `compact-boot.sh` injects pinned-first to defeat keyword-displacement.
+- **`templates/hq/handovers/_pinned/`** new directory + README documenting the distinction.
+- **Stop hook removed** from `templates/hq/.claude/hooks/update-handover.sh` and settings.json.
+- **Migration `v0.2.5-dev-to-v0.2.6-dev.sh`** backfills `_pinned/` + removes update-handover.sh on legacy installs (with hash check to preserve user customizations).
+- **CLAUDE.md "Compact handover" section** rewritten from Stop-hook framing to PreCompact + pinned/rolling framing.
+- **Smoke test** regression-guards: settings.json has PreCompact + no Stop block; pre-compact.sh present + executable; _pinned/README exists; update-handover.sh does NOT exist.
+
+End-to-end keyword-test passed live before this canon port — partner's phrase `cat climb clock tower dog run stairs eagle beats the eye` survived `/compact` and led the post-compact response verbatim.
+
 ## Recently shipped (v0.2.5)
 
 Agent-as-operator: the framework no longer assumes partner runs scripts. Boss + Vibe Chief + per-project build leads all execute CLI on partner's verbal request and report results, not commands. Closes the second weird trait partner flagged (the first — $10 cost parroting — was fixed in commit 28dab5a). See [decisions/2026-05-28-agent-as-operator.md](decisions/2026-05-28-agent-as-operator.md).

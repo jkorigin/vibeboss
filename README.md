@@ -1,8 +1,8 @@
 # Vibeboss
 
-**A conventions + hooks pack for Claude Code that gives non-technical operators a memory-disciplined workspace where sessions auto-boot with state, lessons, crew, and inbox context.**
+**A conventions + hooks pack for Claude Code, with Codex-compatible instruction and hook surfaces, that gives non-technical operators a memory-disciplined workspace where sessions auto-boot with state, lessons, crew, and inbox context.**
 
-What ships today: a scaffolder (`init.sh`), a templates tree, SessionStart hooks, and a set of memory disciplines (runlog, STATE, decisions, LESSONS, inbox). What it does *not* yet ship: an autonomous runtime engine. That's Phase 1 — see [ROADMAP.md](ROADMAP.md).
+What ships today: a scaffolder (`init.sh`), a templates tree, Claude Code `.claude/` hooks, Codex `.codex/` hook mirrors, `AGENTS.md` files for Codex, and a set of memory disciplines (runlog, STATE, decisions, LESSONS, inbox). What it does *not* yet ship: an autonomous runtime engine. That's Phase 1 — see [ROADMAP.md](ROADMAP.md).
 
 > *Skip permissions, approve all, goodnight* — but without the drift, with memory of every mistake, and surfacing only when it genuinely needs you. **(That's the goal. Today's cut delivers the memory and discipline scaffolding; the don't-stop loop and verification tooling arrive in Phase 1.)**
 
@@ -17,11 +17,13 @@ git clone https://github.com/jkorigin/vibeboss ~/ventures/vibeboss
 # 2. Run the init script — scaffolds your workspace in ~2 minutes
 bash ~/ventures/vibeboss/init.sh
 
-# 3. Start your first session
+# 3. Start your first session with Claude Code
 cd ~/ventures/vibeboss-workspace/hq && claude
+
+# Or start/open Codex from that same hq directory
 ```
 
-The init script asks 6 questions (with sensible defaults — just press Enter through). When Claude Code opens in `hq/`, your AI lead **Boss** auto-boots with a briefing and asks what you want to build.
+The init script asks 6 questions (with sensible defaults — just press Enter through). When Claude Code opens in `hq/`, your AI lead **Boss** auto-boots. When Codex opens in `hq/`, `AGENTS.md` supplies the same runtime instructions, and trusted `.codex/` hooks supply the same boot context.
 
 After this first install, you never type a command again. You talk to Boss; Boss handles the rest. Need to update later? Just say so. Want a new project? Just say so. Per LESSON-009 — agent-as-operator.
 
@@ -48,7 +50,9 @@ That boots **Vibe Chief** — the framework caretaker. Vibe Chief is the agent w
 
 If you accidentally `cd` to this repo and run `claude` without `reno.sh`, you'll get a polite redirect pointing you back to your HQ workspace.
 
-**Prerequisites:** [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code), Python 3 (for the boot hooks), Bash 3.2+ (macOS/Linux). Tested with recent Claude Code releases (2026-Q1+).
+For Codex-based framework work, open/run Codex from this source repo. The source `AGENTS.md` is a symlink to `CLAUDE.md`, and the tracked `.codex/` hook loads `CHIEF.md` as the Vibe Chief boot context when trusted.
+
+**Prerequisites:** [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) for the full Claude-native spawn/session workflow, Python 3 (for the boot hooks), Bash 3.2+ (macOS/Linux). Codex can operate the same source/workspace files via `AGENTS.md` + `.codex/hooks.json`; Claude-specific features such as `claude -p`, `claude agents --json`, and Claude plugin activation remain Claude Code surfaces.
 
 ---
 
@@ -61,7 +65,7 @@ If you accidentally `cd` to this repo and run `claude` without `reno.sh`, you'll
 - **State that survives every session** — STATE.md as canonical "where are we right now," runlog as append-only history, decisions as immutable choices in `decisions/YYYY-MM-DD-<slug>.md`
 - **Mistakes become guardrails** — every correction the operator gives turns into a LESSONS hard gate that fires at decision-time, not just a hint in memory
 - **Inbox protocol** — operator drop-zone (`hq/projects/<name>/inbox/{requests,chats,todos,processed}/`) Boss scans on every boot and surfaces
-- **Auto-boot + compact-handover hooks** — SessionStart hook injects boot brief on every fresh/resumed session; pre-`/compact` ritual writes a structured handover that the post-compact hook re-injects. Session never closes; partner never types `boot`.
+- **Auto-boot + compact-handover hooks** — SessionStart hook injects boot brief on every fresh/resumed session; pre-`/compact` ritual writes a structured handover that the post-compact hook re-injects. Claude Code uses `.claude/`; Codex gets `.codex/` mirrors plus `AGENTS.md` fallback instructions. Session never closes; partner never types `boot`.
 - **Crew system** — per-project named build leads (Banana, Carrot, Ginger, etc.) registered in `hq/crew.yml`. Boss dispatches via inbox (async) or `claude --session-id` (sync). Naming theme: produce.
 
 For what's planned but not yet built (autonomous loop, verification tooling, Main/Builder/Research separation, OSS dashboard scaffold), see [ROADMAP.md](ROADMAP.md).

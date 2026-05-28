@@ -2,7 +2,46 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
-## [unreleased] — v0.2.5 in progress — Agent-as-operator (2026-05-28)
+## [unreleased] — v0.2.6 in progress — PreCompact handover mechanism (2026-05-28)
+
+The v0.2.4 Stop-hook compact-handover design failed the keyword-test acceptance gate on the very same day it shipped. Boss in the live HQ session diagnosed three compounding failure modes, switched to a PreCompact-hook design with pinned/rolling separation, and **passed live** — partner triggered `/compact`, post-compact session led with the keyword verbatim. Boss filed the port spec through the framework-feedback channel (the channel I designed in v0.2.3 — used end-to-end for the first time). This ship ports the verified-live mechanism into framework canon.
+
+### Added
+
+- **`templates/hq/.claude/hooks/pre-compact.sh`** (236 lines, copied from `~/ventures/vibeboss-workspace/hq/.claude/hooks/pre-compact.sh` verified-live source). PreCompact hook. Fires AT the moment of compaction (both `auto` from CC's 100% context limit and `manual` from partner's `/compact`). Receives `transcript_path` on stdin per CC's PreCompact hook signature. Captures last 8 partner turns verbatim + last 3 agent turns truncated + marker grep across the full session into `hq/handovers/_current.md`. Widened marker regex: `(KEYWORD|REMEMBER|TODO|HANDOVER|PARTNER ASK|DON'?T FORGET|IMPORTANT|CRITICAL|NOTE)[:\s]` plus quoted-phrase patterns (`you (will|should|must) say ['"]...['"]`, `remember ['"]...['"]`, `(test|validate|verify) ...keyword`). Idempotent, exits 0 on any error so it can never block compaction.
+- **`templates/hq/.claude/hooks/compact-boot.sh` rewritten** for pinned-first injection. Composes `additionalContext` as: boot brief → all `_pinned/*.md` sorted by filename → `_current.md` → RESUME PROTOCOL block that hard-instructs: *"If any PINNED handover contains a keyword, test phrase, or instruction-to-say-verbatim, honour it on the FIRST response of this session — before greeting, before recap, before any other content."* Pinned-first ordering is what closes the keyword-displacement failure mode.
+- **`templates/hq/handovers/_pinned/`** new directory with `README.md` documenting the pinned/rolling distinction + `.gitkeep`. Pinned handovers survive every compact; rolling `_current.md` is overwritten by PreCompact hook at every compact moment.
+- **PreCompact hook registration in `templates/hq/.claude/settings.json`** — two matcher entries (`"auto"` and `"manual"`) both pointing at `pre-compact.sh`. `Stop` block removed.
+- **Codex compatibility layer.** Source repo now has tracked `.codex/hooks.json` that loads `CHIEF.md` for Codex source-root sessions. Fresh installs scaffold `AGENTS.md` at workspace root, HQ, labs, and Boss-created projects. HQ and workspace-root `.codex/hooks.json` mirror the Claude boot/redirect contexts; HQ Codex hooks are thin wrappers around canonical `.claude/hooks/*.sh` so boot, STOP, update-banner, and compact behavior stay single-sourced.
+- **`migrations/v0.2.5-dev-to-v0.2.6-dev.sh`** — backfills `<workspace>/hq/handovers/_pinned/` for legacy installs; removes `update-handover.sh` if its hash matches the installed-original (i.e. user didn't customize it). Idempotent.
+- **Smoke test extended:** verifies `pre-compact.sh` exists + executable, settings.json has both `PreCompact` matchers, settings.json does NOT have `Stop` block, `_pinned/README.md` exists, `update-handover.sh` does NOT exist; also verifies Codex `AGENTS.md` files and `.codex` hooks exist and emit valid `additionalContext` JSON. Regression-guards against the failed Stop-hook design returning and against Codex compatibility regressing to source-root-only.
+- `decisions/2026-05-28-precompact-handover-mechanism.md` — full decision documenting the failure modes, the replacement design, source-verification against <cc-source-archive> (CC source archive), the verified-live keyword-test pass, and the limits (pinned content is operator-curated; `_pinned/*.md` grows over time; CC version drift may shift the hook signature).
+- `decisions/2026-05-28-codex-compatibility.md` — documents the Codex audit finding (root `AGENTS.md` was present, generated workspaces were not Codex-friendly), the compatibility layer, verification coverage, and honest limits (Claude spawn/plugin surfaces remain Claude Code-specific).
+
+### Removed
+
+- **`templates/hq/.claude/hooks/update-handover.sh`** — the Stop hook from the v0.2.4 abandoned design. Stop entry removed from `templates/hq/.claude/settings.json`. The script + the manifest entry are deleted by the migration script for installs that didn't customize the file.
+
+### Changed
+
+- **`templates/hq/CLAUDE.md` "Compact handover" section rewritten** from the Stop-hook framing to the PreCompact + pinned/rolling framing. New section name: *"Compact handover — PreCompact hook + pinned/rolling split"*. Documents when to write a pinned handover (keywords, hard decisions, identity reminders, "don't forget" content) and the filename convention (`YYYY-MM-DD-HHMM-<slug>.md` in `_pinned/`).
+- **`init.sh`** — scaffolds `pre-compact.sh` + makes it executable on fresh install; scaffolds `handovers/_pinned/` directory + its README + `.gitkeep`; stops scaffolding `update-handover.sh`. Same `write_file` / `chmod +x` pattern as existing hooks.
+- **README / CLAUDE.md / CHIEF.md** — now document dual tool support: Claude Code remains the native runtime; Codex is supported via `AGENTS.md` and `.codex/hooks.json`.
+- **`decisions/2026-05-28-rolling-handover-mechanism.md`** carries a `## Superseded` block noting the same-day failure + pointing at the replacement decision. Per CLAUDE.md decisions discipline (supersession via new file, never overwrite), the original file stays.
+- **`VERSION`** bumped to `0.2.6-dev`.
+- **`ROADMAP.md`** gains "Recently shipped (v0.2.6)" section above v0.2.5.
+
+### Rationale
+
+The Stop-hook approach (shipped in v0.2.4 commit `f5ec386`) failed for four compounding reasons: (1) `_current.md` overwritten every turn → keywords from earlier in the session displaced by topic drift; (2) `compact-boot.sh` mtime-newest selection meant the rich dated handover (where the keyword lived) lost to the just-touched rolling file; (3) marker regex too narrow to catch partner content without `KEYWORD:` literal prefix; (4) structural — Stop hook running in the post-compact session sees only post-compact transcript content, so the pre-compact turn (where the keyword lived) is gone before grep even runs.
+
+PreCompact + pinned/rolling closes all four: PreCompact runs at the boundary with the full session still in the transcript; pinned handovers are immune to mtime displacement; widened regex + quoted-phrase capture surfaces a broader set of partner emphasis patterns; the hook sees the pre-compact transcript directly. Verified live 2026-05-28 — partner's keyword `cat climb clock tower dog run stairs eagle beats the eye` survived `/compact` and led the post-compact response verbatim.
+
+### Notes on authorship + the framework-feedback channel
+
+Boss (live HQ session) diagnosed the v0.2.4 failure, designed + verified the replacement mechanism, and filed the port spec at `<workspace>/hq/follow-ups/framework/2026-05-28-precompact-mechanism-port.md` — exactly the use case the v0.2.3 feedback channel was designed for. Vibe Chief read the file, ported the verified-live source into framework templates, wrote this decision + CHANGELOG entry, ran the validation gate. After landing, the feedback file gets a `## Disposition` footer (per v0.2.1's disposition protocol) and moves to `follow-ups/framework/processed/`. The loop closes.
+
+## [v0.2.5] — 2026-05-28 — Agent-as-operator
 
 The architectural shift partner asked for: *"users won't run scripts. you need to design the agents to handle all these things."* Vibeboss canon stops assuming partner types CLI commands. Boss, Vibe Chief, and per-project build leads run scripts on partner's verbal request and report results, not commands. The only unavoidable CLI moment is the one-time `bash init.sh` bootstrap (no agent exists yet at that moment).
 
@@ -39,7 +78,9 @@ The architectural shift partner asked for: *"users won't run scripts. you need t
 - **Protocol generalization.** The Partner-facing protocols section has five canonical mappings. Boss has to generalize for everything else ("when in doubt, results not commands"). Future LESSONS may sharpen the heuristic if drift appears.
 - **Shell alias for the bootstrap step.** Phase 2's `vibeboss reno` alias may let us reduce the one CLI moment to a shorter word; won't eliminate it.
 
-## [v0.2.4] — 2026-05-28 — Rolling handover mechanism
+## [v0.2.4] — 2026-05-28 — Rolling handover mechanism (SUPERSEDED SAME DAY — see v0.2.6)
+
+> **Superseded:** This release's Stop-hook design failed the keyword-test acceptance gate on the very same day it shipped. See v0.2.6 above and `decisions/2026-05-28-precompact-handover-mechanism.md` for the working PreCompact + pinned/rolling replacement. The original entry is preserved below for traceability.
 
 Compact handover converted from self-discipline ("agent remembers to write handover before /compact") to mechanism-driven enforcement. A `Stop` hook fires every turn and rewrites `hq/handovers/_current.md` with the last partner message, last agent response, and grepped markers — so at the moment Claude Code's auto-compact fires, a fresh handover always exists for `compact-boot.sh` to inject. Zero agent self-discipline required as the baseline. Rich dated handovers preserved as an optional override layer.
 

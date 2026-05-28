@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/redirect.sh",
+            "statusMessage": "Loading Vibeboss workspace redirect"
+          }
+        ]
+      },
+      {
+        "matcher": "resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/redirect.sh",
+            "statusMessage": "Loading Vibeboss workspace redirect"
+          }
+        ]
+      },
+      {
+        "matcher": "clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/redirect.sh",
+            "statusMessage": "Loading Vibeboss workspace redirect"
+          }
+        ]
+      }
+    ]
+  }
+}

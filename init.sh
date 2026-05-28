@@ -450,6 +450,7 @@ if $ADD_PROJECT_MODE; then
   ensure_dir "$PROJECT_PATH/handovers"
 
   write_file "$PROJECT_TEMPLATES/.claude/settings.json"  "$PROJECT_PATH/.claude/settings.json"
+  write_file "$PROJECT_TEMPLATES/README.md"              "$PROJECT_PATH/AGENTS.md"
   write_file "$PROJECT_TEMPLATES/README.md"              "$PROJECT_PATH/README.md"
   write_file "$PROJECT_TEMPLATES/STATE.md"               "$PROJECT_PATH/STATE.md"
   write_file "$PROJECT_TEMPLATES/crew.yml"               "$PROJECT_PATH/crew.yml"
@@ -785,6 +786,37 @@ PROMPT
     update_file "$src" "$dest"
   done < <(find "$TEMPLATES" -type f -print0)
 
+  # Codex-visible instruction mirrors derive from canonical docs rather than
+  # living as separate template copies.
+  if [ -f "$TEMPLATES/hq/CLAUDE.md" ]; then
+    update_file "$TEMPLATES/hq/CLAUDE.md" "$WORKSPACE/hq/AGENTS.md"
+  fi
+  if [ -f "$TEMPLATES/labs/README.md" ]; then
+    update_file "$TEMPLATES/labs/README.md" "$WORKSPACE/labs/AGENTS.md"
+  fi
+
+  # Existing project directories predate the Codex compatibility layer. Do not
+  # try to re-template customized project READMEs; just backfill AGENTS.md from
+  # the project's current README when AGENTS.md is missing.
+  if [ -d "$WORKSPACE/hq/projects" ]; then
+    for project_dir in "$WORKSPACE/hq/projects"/*; do
+      [ -d "$project_dir" ] || continue
+      [ -f "$project_dir/README.md" ] || continue
+      agents_path="$project_dir/AGENTS.md"
+      if [ -f "$agents_path" ]; then
+        continue
+      fi
+      if $DRY_RUN; then
+        echo "    [dry-run] would create missing project AGENTS.md: ${agents_path#"$WORKSPACE"/}"
+      else
+        cp "$project_dir/README.md" "$agents_path"
+        write_manifest_hash "$agents_path"
+        info "Created project Codex instructions: ${agents_path#"$WORKSPACE"/}"
+      fi
+      UPDATE_NEW=$((UPDATE_NEW + 1))
+    done
+  fi
+
   # ── Run migrations ──────────────────────────────────────────────────────────
   heading "Running migrations..."
   MIGRATION_RUNNER="$SCRIPT_DIR/migrations/run.sh"
@@ -802,6 +834,19 @@ PROMPT
     fi
   else
     warn "Migration runner not found at $MIGRATION_RUNNER — skipping migrations."
+  fi
+
+  # Hook scripts are written as plain files by update_file(), so restore exec
+  # bits for both Claude Code and Codex hook surfaces.
+  if ! $DRY_RUN; then
+    chmod +x "$WORKSPACE/.claude/hooks/redirect.sh" 2>/dev/null || true
+    chmod +x "$WORKSPACE/.codex/hooks/redirect.sh" 2>/dev/null || true
+    chmod +x "$HQ_PATH/.claude/hooks/boot.sh" 2>/dev/null || true
+    chmod +x "$HQ_PATH/.claude/hooks/compact-boot.sh" 2>/dev/null || true
+    chmod +x "$HQ_PATH/.claude/hooks/pre-compact.sh" 2>/dev/null || true
+    chmod +x "$HQ_PATH/.codex/hooks/boot.sh" 2>/dev/null || true
+    chmod +x "$HQ_PATH/.codex/hooks/compact-boot.sh" 2>/dev/null || true
+    chmod +x "$HQ_PATH/.codex/hooks/pre-compact.sh" 2>/dev/null || true
   fi
 
   # ── Update version metadata ─────────────────────────────────────────────────
@@ -945,6 +990,7 @@ HQ_PATH="$WORKSPACE/hq"
 # ── HQ skeleton ───────────────────────────────────────────────────────────────
 ensure_dir "$HQ_PATH"
 ensure_dir "$HQ_PATH/.claude/hooks"
+ensure_dir "$HQ_PATH/.codex/hooks"
 ensure_dir "$HQ_PATH/skills/dev-workflow"
 ensure_dir "$HQ_PATH/skills/compact-handover"
 ensure_dir "$HQ_PATH/skills/dispatch-vibe-chief"
@@ -957,6 +1003,7 @@ ensure_dir "$HQ_PATH/inbox/processed"
 ensure_dir "$HQ_PATH/runlog"
 ensure_dir "$HQ_PATH/decisions"
 ensure_dir "$HQ_PATH/handovers"
+ensure_dir "$HQ_PATH/handovers/_pinned"
 ensure_dir "$HQ_PATH/follow-ups"
 ensure_dir "$HQ_PATH/follow-ups/framework"
 ensure_dir "$HQ_PATH/follow-ups/framework/processed"
@@ -966,13 +1013,18 @@ ensure_dir "$HQ_PATH/projects"
 
 # HQ files
 write_file "$TEMPLATES/hq/CLAUDE.md"                          "$HQ_PATH/CLAUDE.md"
+write_file "$TEMPLATES/hq/CLAUDE.md"                          "$HQ_PATH/AGENTS.md"
 write_file "$TEMPLATES/hq/lessons.md"                         "$HQ_PATH/lessons.md"
 write_file "$TEMPLATES/hq/crew.yml"                           "$HQ_PATH/crew.yml"
 write_file "$TEMPLATES/hq/STATE.md"                           "$HQ_PATH/STATE.md"
 write_file "$TEMPLATES/hq/.claude/settings.json"              "$HQ_PATH/.claude/settings.json"
 write_file "$TEMPLATES/hq/.claude/hooks/boot.sh"              "$HQ_PATH/.claude/hooks/boot.sh"
 write_file "$TEMPLATES/hq/.claude/hooks/compact-boot.sh"      "$HQ_PATH/.claude/hooks/compact-boot.sh"
-write_file "$TEMPLATES/hq/.claude/hooks/update-handover.sh"   "$HQ_PATH/.claude/hooks/update-handover.sh"
+write_file "$TEMPLATES/hq/.claude/hooks/pre-compact.sh"       "$HQ_PATH/.claude/hooks/pre-compact.sh"
+write_file "$TEMPLATES/hq/.codex/hooks.json"                  "$HQ_PATH/.codex/hooks.json"
+write_file "$TEMPLATES/hq/.codex/hooks/boot.sh"               "$HQ_PATH/.codex/hooks/boot.sh"
+write_file "$TEMPLATES/hq/.codex/hooks/compact-boot.sh"       "$HQ_PATH/.codex/hooks/compact-boot.sh"
+write_file "$TEMPLATES/hq/.codex/hooks/pre-compact.sh"        "$HQ_PATH/.codex/hooks/pre-compact.sh"
 write_file "$TEMPLATES/hq/skills/dev-workflow/SKILL.md"       "$HQ_PATH/skills/dev-workflow/SKILL.md"
 write_file "$TEMPLATES/hq/skills/compact-handover/SKILL.md"   "$HQ_PATH/skills/compact-handover/SKILL.md"
 write_file "$TEMPLATES/hq/skills/dispatch-vibe-chief/SKILL.md" "$HQ_PATH/skills/dispatch-vibe-chief/SKILL.md"
@@ -981,6 +1033,8 @@ chmod +x "$HQ_PATH/scripts/spawn-vibe-chief.sh" 2>/dev/null || true
 write_file "$TEMPLATES/hq/runlog/README.md"                   "$HQ_PATH/runlog/README.md"
 write_file "$TEMPLATES/hq/decisions/README.md"                "$HQ_PATH/decisions/README.md"
 write_file "$TEMPLATES/hq/handovers/README.md"                "$HQ_PATH/handovers/README.md"
+write_file "$TEMPLATES/hq/handovers/_pinned/README.md"        "$HQ_PATH/handovers/_pinned/README.md"
+touch_file "$HQ_PATH/handovers/_pinned/.gitkeep"
 write_file "$TEMPLATES/hq/follow-ups/README.md"               "$HQ_PATH/follow-ups/README.md"
 write_file "$TEMPLATES/hq/follow-ups/framework/README.md"     "$HQ_PATH/follow-ups/framework/README.md"
 write_file "$TEMPLATES/hq/calibration/README.md"              "$HQ_PATH/calibration/README.md"
@@ -1010,6 +1064,7 @@ ensure_dir "$LABS_PATH/research/_per_project_template/findings"
 ensure_dir "$LABS_PATH/handoffs"
 
 write_file "$TEMPLATES/labs/README.md"                                    "$LABS_PATH/README.md"
+write_file "$TEMPLATES/labs/README.md"                                    "$LABS_PATH/AGENTS.md"
 write_file "$TEMPLATES/labs/STATE.md"                                     "$LABS_PATH/STATE.md"
 write_file "$TEMPLATES/labs/queue.md"                                     "$LABS_PATH/queue.md"
 write_file "$TEMPLATES/labs/crew.yml"                                     "$LABS_PATH/crew.yml"
@@ -1036,19 +1091,28 @@ info "Projects directory created at $WORKSPACE/projects"
 # `cd vibeboss-workspace/ && claude` get a friendly redirect to hq/ instead of
 # a blank vanilla session.
 ensure_dir "$WORKSPACE/.claude/hooks"
+ensure_dir "$WORKSPACE/.codex/hooks"
 
+write_file "$TEMPLATES/_workspace_root/AGENTS.md"                         "$WORKSPACE/AGENTS.md"
 write_file "$TEMPLATES/_workspace_root/.claude/settings.json"         "$WORKSPACE/.claude/settings.json"
 write_file "$TEMPLATES/_workspace_root/.claude/hooks/redirect.sh"     "$WORKSPACE/.claude/hooks/redirect.sh"
 write_file "$TEMPLATES/_workspace_root/.claude/hooks/redirect.md"     "$WORKSPACE/.claude/hooks/redirect.md"
+write_file "$TEMPLATES/_workspace_root/.codex/hooks.json"             "$WORKSPACE/.codex/hooks.json"
+write_file "$TEMPLATES/_workspace_root/.codex/hooks/redirect.sh"      "$WORKSPACE/.codex/hooks/redirect.sh"
+write_file "$TEMPLATES/_workspace_root/.codex/hooks/redirect.md"      "$WORKSPACE/.codex/hooks/redirect.md"
 
-info "Workspace-root redirect hook installed at $WORKSPACE/.claude"
+info "Workspace-root redirect hooks installed at $WORKSPACE/.claude and $WORKSPACE/.codex"
 
 # ─── Make hooks executable ────────────────────────────────────────────────────
 if ! $DRY_RUN; then
   chmod +x "$HQ_PATH/.claude/hooks/boot.sh"
   chmod +x "$HQ_PATH/.claude/hooks/compact-boot.sh"
-  chmod +x "$HQ_PATH/.claude/hooks/update-handover.sh"
+  chmod +x "$HQ_PATH/.claude/hooks/pre-compact.sh"
+  chmod +x "$HQ_PATH/.codex/hooks/boot.sh"
+  chmod +x "$HQ_PATH/.codex/hooks/compact-boot.sh"
+  chmod +x "$HQ_PATH/.codex/hooks/pre-compact.sh"
   chmod +x "$WORKSPACE/.claude/hooks/redirect.sh"
+  chmod +x "$WORKSPACE/.codex/hooks/redirect.sh"
 fi
 
 # ─── Smoke-test the boot hook ─────────────────────────────────────────────────
@@ -1093,6 +1157,7 @@ cat <<SUCCESS
 
   1. Start your first session:
        cd "${WORKSPACE}/hq" && claude
+     Or open Codex at "${WORKSPACE}/hq".
      ${LEAD_NAME} will auto-boot with a briefing.
 
   2. Tell ${LEAD_NAME} what you want to build.

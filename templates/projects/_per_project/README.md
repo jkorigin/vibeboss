@@ -84,6 +84,7 @@ See the dispatch format in `hq/CLAUDE.md` (Boss's boot brief). Boss owns dispatc
 
 ```
 {{PROJECT_NAME}}/
+  AGENTS.md         ← Codex instructions (generated from this README)
   README.md         ← this file
   STATE.md          ← project state (truth)
   crew.yml          ← per-project crew snippet (build lead only)

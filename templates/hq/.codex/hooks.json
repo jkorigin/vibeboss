@@ -1,7 +1,4 @@
 {
-  "enabledPlugins": {
-    "superpowers@claude-plugins-official": true
-  },
   "hooks": {
     "SessionStart": [
       {
@@ -9,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/boot.sh"
+            "command": "bash .codex/hooks/boot.sh",
+            "statusMessage": "Loading Vibeboss HQ boot brief"
           }
         ]
       },
@@ -18,7 +16,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/boot.sh"
+            "command": "bash .codex/hooks/boot.sh",
+            "statusMessage": "Loading Vibeboss HQ boot brief"
           }
         ]
       },
@@ -27,7 +26,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/boot.sh"
+            "command": "bash .codex/hooks/boot.sh",
+            "statusMessage": "Loading Vibeboss HQ boot brief"
           }
         ]
       },
@@ -36,7 +36,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/compact-boot.sh"
+            "command": "bash .codex/hooks/compact-boot.sh",
+            "statusMessage": "Loading Vibeboss compact handover"
           }
         ]
       }
@@ -47,7 +48,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/pre-compact.sh"
+            "command": "bash .codex/hooks/pre-compact.sh",
+            "statusMessage": "Writing Vibeboss rolling handover"
           }
         ]
       },
@@ -56,7 +58,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/pre-compact.sh"
+            "command": "bash .codex/hooks/pre-compact.sh",
+            "statusMessage": "Writing Vibeboss rolling handover"
           }
         ]
       }
