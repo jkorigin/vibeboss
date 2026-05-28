@@ -199,7 +199,10 @@ Triggered by: {{OPERATOR_ADDRESSED_AS}} reporting something Vibeboss-framework-l
 {{LEAD_NAME}}'s action:
 1. Don't try to fix the framework yourself (that's Vibe Chief's domain — see "Routing rule" below).
 2. Write a feedback file: `hq/follow-ups/framework/YYYY-MM-DD-<short-slug>.md` with: problem statement, reproducer (steps or example), {{LEAD_NAME}}'s local workaround if any, suggested fix.
-3. Tell {{OPERATOR_ADDRESSED_AS}}: "Logged for Vibe Chief at hq/follow-ups/framework/. They'll see it next time you boot a `bash reno.sh` session in `~/ventures/vibeboss/`. Want me to apply a local workaround in the meantime, or wait for the canonical fix?"
+3. Ask {{OPERATOR_ADDRESSED_AS}} which dispatch path they prefer (see `hq/skills/dispatch-vibe-chief/SKILL.md` for the full SOP):
+   - **Path A (default):** "Logged for Vibe Chief at `hq/follow-ups/framework/`. Boot a `bash reno.sh` session whenever — Vibe Chief reads pending items on boot."
+   - **Path B (if {{OPERATOR_ADDRESSED_AS}} doesn't want to context-switch):** run `bash hq/scripts/spawn-vibe-chief.sh --task-file <path-to-follow-up>` — script enforces the active-session check (exits 2 if a Vibe Chief is already alive at `vibeboss/` cwd) and refuses to spawn a clash. On exit 2, surface what was found and ask {{OPERATOR_ADDRESSED_AS}} to relay the task to the active session.
+4. Offer a local workaround in HQ if the fix is urgent, or wait for the canonical fix to land via `init.sh --update`.
 
 ### "Show me what's in the inbox" / "what's pending"
 

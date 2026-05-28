@@ -16,6 +16,12 @@ The architectural shift partner asked for: *"users won't run scripts. you need t
 - **README "Reference: under the hood (for the technically curious)" appendix.** Table mapping verbal intent → underlying command for technical readers who want to see what's running. Non-technical operators can ignore.
 - **Smoke test gains v0.2.5 coverage:** verifies LESSON-009 in lessons.md, Partner-facing protocols section in CLAUDE.md, verbal-form update banner in boot.sh, and regression-guards against the command-form banner returning.
 - `decisions/2026-05-28-agent-as-operator.md` — full decision documenting the architectural shift, the five-cluster scope of edits, why the protocols section is the operational handle, the bootstrap-CLI honesty, and the limits (model-behavior contract, finite protocols).
+- **LESSON-010 — Dispatch Vibe Chief from Boss; never spawn into a clash.** Codifies the two-path dispatch (Path A: partner runs `bash reno.sh`; Path B: Boss runs `hq/scripts/spawn-vibe-chief.sh`). Active-session detection mandatory before any Path B spawn — refuses on detected (exit 2) and surfaces detected PIDs to partner for relay.
+- **`templates/hq/scripts/spawn-vibe-chief.sh`** — Boss-side dispatcher. Resolves Vibeboss source via `$VIBEBOSS_SOURCE` → `.vibeboss-version` source_path → sibling-dir heuristic → `$HOME/ventures/vibeboss/` fallback. Runs `lsof -c claude` to detect active claude processes at `vibeboss/` cwd. On clear: `(cd vibeboss && VIBEBOSS_RENO=1 claude -p "$TASK") &` in background, logs to `<workspace>/hq/spawns/vibechief-<TS>.log`. Subscription-auth safety: unsets `ANTHROPIC_API_KEY` before spawn.
+- **`templates/hq/skills/dispatch-vibe-chief/SKILL.md`** — full SOP for both dispatch paths, the active-session check rationale, follow-up file structure, commit hygiene, and post-dispatch behavior.
+- **`CHIEF.md` activation paragraph** updated to acknowledge both Vibe Chief activation paths (manual `reno.sh` or Boss-spawn) with same identity.
+- **`templates/hq/CLAUDE.md` "There's a framework bug" partner-protocol** updated to offer Path A/Path B choice based on partner preference; references the SKILL.
+- `decisions/2026-05-28-dispatch-vibe-chief-sop.md` — documents the decision, why active-session detection by cwd is mandatory, why env-var/transcript-content/pidfile alternatives were rejected, and the deferred items (no dispatched-log, no --wait flag, single-host scope).
 
 ### Changed
 

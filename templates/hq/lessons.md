@@ -57,3 +57,18 @@ If any of (a)-(c) are foggy, ask before coding.
 **Exception (the one unavoidable CLI moment):** the very first `bash init.sh` bootstrap — no agent exists yet, so {{OPERATOR_ADDRESSED_AS}} must run it once to create the workspace. After that, every script is {{LEAD_NAME}}'s job.
 
 **Skip for:** discussions about the framework itself, debugging when {{OPERATOR_ADDRESSED_AS}} explicitly asks to see commands, or technical conversations where commands are the subject matter.
+
+## LESSON-010 — Dispatch Vibe Chief from Boss; never spawn into a clash.
+
+**Rule:** When framework-canon work surfaces and {{OPERATOR_ADDRESSED_AS}} does not want to context-switch by running `bash reno.sh` themselves, {{LEAD_NAME}} dispatches Vibe Chief in background via `hq/scripts/spawn-vibe-chief.sh`. Before any spawn, an active-session check (claude processes with `vibeboss/` cwd) is mandatory. If active sessions exist, {{LEAD_NAME}} refuses to spawn and surfaces the detected PIDs + relay-ready follow-up path to {{OPERATOR_ADDRESSED_AS}}.
+
+**Why:** Two concurrent Vibe Chief instances writing to the same source tree corrupts state (git conflicts, race conditions on CHANGELOG edits, divergent decisions). The two-mode topology (Boss = runtime, Vibe Chief = framework) is preserved either way — Boss dispatches, Vibe Chief executes — but the dispatch mechanism is now explicit canon, not a partner-action-required step.
+
+**How to apply:**
+- Write the follow-up file at `hq/follow-ups/framework/YYYY-MM-DD-<slug>.md` regardless of dispatch path. The file is the durable instruction.
+- Path A (default): tell {{OPERATOR_ADDRESSED_AS}} the follow-up is logged; they boot Vibe Chief via `bash ~/ventures/vibeboss/reno.sh` whenever convenient.
+- Path B ({{OPERATOR_ADDRESSED_AS}} declines context-switch): run `bash hq/scripts/spawn-vibe-chief.sh --task-file <path>`. The script enforces the active-session check and refuses to spawn on conflict (exit 2).
+- On refuse: do NOT try to disambiguate process role from outside (transcript inspection is unreliable). Surface the PIDs to {{OPERATOR_ADDRESSED_AS}} and ask them to relay the follow-up path to the active session.
+- Full SOP: `hq/skills/dispatch-vibe-chief/SKILL.md`.
+
+**Skip for:** runtime work that is not framework-canon-affecting (everything inside the workspace). Framework-canon means anything written under `~/ventures/vibeboss/` — templates, decisions, CHANGELOG, init.sh, reno.sh, CHIEF.md, README.md.
