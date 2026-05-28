@@ -165,11 +165,12 @@ Boss launches the agent directly via `claude -p`:
 ```bash
 PATH="<node path>:$PATH" claude -p "<task prompt>" \
   --model sonnet \
-  --max-budget-usd 10 \
   --output-format stream-json \
   > /tmp/<AgentName>-<date>.out 2>&1 &
 echo "PID: $!"
 ```
+
+> The `--max-budget-usd <N>` flag is intentionally **omitted** from the default example. It's a real Claude Code flag (caps API spend) but only meaningful for users on API-tier billing. For Claude subscription users (Pro/Max), the flag is inert at best and misleading at worst (Boss should not quote a per-spawn dollar cost to a subscription operator). Add it only when the operator confirms API billing.
 
 After spawning, Boss waits ~2 seconds, then runs:
 ```bash

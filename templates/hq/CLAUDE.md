@@ -136,11 +136,12 @@ Named agent reads its inbox on next boot. **After task completion** (not at pick
 ```bash
 PATH="<node path>:$PATH" claude -p "<task prompt>" \
   --model sonnet \
-  --max-budget-usd 10 \
   --output-format stream-json \
   > /tmp/<AgentName>-<date>.out 2>&1 &
 echo "PID: $!"
 ```
+
+> **Note on cost.** A spawn does not incur per-spawn dollar charges for partners on a Claude subscription (Pro / Max) — the subscription absorbs usage. The `claude -p` flag `--max-budget-usd <N>` exists as a safety cap for users on API-tier billing (pay-per-token); it's not part of the default spawn example and `{{LEAD_NAME}}` should not quote a per-spawn cost to {{OPERATOR_ADDRESSED_AS}} on a subscription plan. Add the flag only if {{OPERATOR_ADDRESSED_AS}} has confirmed they're on API billing.
 
 Wait ~2 seconds, then capture the session ID:
 ```bash
@@ -162,19 +163,23 @@ See `hq/inbox/README.md` for the bidirectional inbox topology and message format
 
 ---
 
-## Compact handover discipline
+## Compact handover — mechanism-driven, not self-discipline
 
-When context approaches its limit (see triggers below), write a structured handover file at `hq/handovers/YYYY-MM-DD-HHMM-<slug>.md` BEFORE running `/compact`.
+Handover survives `/compact` (and Claude Code's auto-compact at ~100% context) via **two hooks working together**, with zero agent self-discipline required as the baseline.
 
-**Triggers (any single one is sufficient):**
-- T1: >50 substantive turns in the current session
-- T2: >4 hours since session start
-- T3: Last 10 tool results average >3KB each
-- T4: {{OPERATOR_ADDRESSED_AS}} signals "compact soon" or similar
-- T5: Self-perception of recall gaps ("I can't recall X from earlier")
+**The mechanism:**
+1. **`Stop` hook** (`hq/.claude/hooks/update-handover.sh`) fires every time the assistant finishes a turn. It parses the live transcript and rewrites `hq/handovers/_current.md` with the latest partner message, the agent's last response (truncated), and any `KEYWORD:` / `REMEMBER:` / `TODO:` / `PARTNER ASK:` / `DON'T FORGET:` / `IMPORTANT:` markers grepped from the session. So at any moment, `_current.md` is at most one turn stale.
+2. **`SessionStart matcher="compact"` hook** (`hq/.claude/hooks/compact-boot.sh`) fires after compaction completes. It picks the newest handover file < 60 minutes old (`_current.md` is always newest because the Stop hook just touched it) and injects it as `additionalContext`. The post-compact agent boots with the keyword/context intact.
 
-**Skill:** `hq/skills/compact-handover/SKILL.md`
-**Hook:** `hq/.claude/hooks/compact-boot.sh` — injects the handover automatically on the `compact` SessionStart matcher.
+**Layered rich handover (optional):** When {{LEAD_NAME}} wants to capture something richer than the rolling auto-handover — a milestone shipping, a multi-day plan crystallizing, a critical decision — write a dated handover at `hq/handovers/YYYY-MM-DD-HHMM-<slug>.md`. Because `compact-boot.sh` picks the newest file, a freshly-written dated handover takes precedence over `_current.md` until 60 minutes elapse. After that, the rolling baseline takes over again.
+
+**Triggers for the optional rich handover:**
+- T1: a milestone just shipped and the next session needs to know the new ground truth
+- T2: a critical decision was made mid-session that markers alone can't convey
+- T3: {{OPERATOR_ADDRESSED_AS}} explicitly signals "save context for next session"
+- T4: {{LEAD_NAME}} self-perceives recall gaps that the rolling format doesn't capture
+
+**Skill:** `hq/skills/compact-handover/SKILL.md` (for the rich-handover format)
 
 ---
 
