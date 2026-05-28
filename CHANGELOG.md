@@ -2,6 +2,31 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
+## [unreleased] — v0.2.4 in progress — Rolling handover mechanism (2026-05-28)
+
+Compact handover converted from self-discipline ("agent remembers to write handover before /compact") to mechanism-driven enforcement. A `Stop` hook fires every turn and rewrites `hq/handovers/_current.md` with the last partner message, last agent response, and grepped markers — so at the moment Claude Code's auto-compact fires, a fresh handover always exists for `compact-boot.sh` to inject. Zero agent self-discipline required as the baseline. Rich dated handovers preserved as an optional override layer.
+
+### Added
+
+- **`templates/hq/.claude/hooks/update-handover.sh`** — Stop hook. Parses the live transcript JSONL, extracts last user message + last assistant response, greps for markers (`KEYWORD:` / `REMEMBER:` / `TODO:` / `HANDOVER:` / `PARTNER ASK:` / `DON'T FORGET:` / `IMPORTANT:`), writes `hq/handovers/_current.md`. Idempotent, exits 0 on any error so it can never block the assistant. ~100ms per turn.
+- **Stop hook registration in `templates/hq/.claude/settings.json`** — new `"Stop"` entry under `"hooks"`, invoking `${CLAUDE_PROJECT_DIR}/.claude/hooks/update-handover.sh`. Uses the same portable-path pattern as existing SessionStart hooks.
+- **`init.sh` scaffolds + chmods the new Stop hook script** at install time. (Originally drafted by Boss without this — Vibe Chief caught the gap during land: fresh installs would have a Stop hook registered in settings.json pointing at a missing file. Now plugged.)
+- **Smoke test verifies the new hook script is present and executable** (`tests/init-smoke.sh` gained one `check_exec` line so CI catches regressions of the scaffold gap above).
+- `decisions/2026-05-28-rolling-handover-mechanism.md` — documents why Stop hook over PreCompact (defends multi-trigger, cheap+frequent, composable with optional rich layer), the dual-layer model (rolling baseline + optional rich override picked by mtime), the marker-grep heuristic + future LLM-summarized escalation path, and the keyword test validation (`cat climb clock tower dog run stairs eagle beats the eye`, 2026-05-28 12:10).
+
+### Changed
+
+- **`templates/hq/CLAUDE.md`** — "Compact handover" section rewritten: was framed as agent self-discipline with triggers T1-T5, now framed as "Stop hook + compact-boot.sh working together with zero discipline as baseline; rich dated handovers as optional override layer". The five triggers are reframed as opt-in moments for the rich layer, not as gates the agent must self-recognize. (Landed early — bundled into commit 28dab5a inadvertently when Boss and Vibe Chief edited CLAUDE.md in parallel sessions.)
+- **`VERSION`** bumped to `0.2.4-dev`.
+
+### Rationale
+
+The original subsystem-E design required the agent to self-detect context-pressure triggers and proactively write a handover before `/compact`. Two failure modes appeared in practice: (1) the agent has no access to context-usage numbers (the CC app shows partner 96%, the agent never sees it), and (2) auto-compact at 100% fires without warning — by the time the agent could react, compaction has already happened. Mechanism-driven enforcement removes both failure modes.
+
+### Notes on authorship
+
+Boss (live HQ session) drafted the Stop hook, settings.json registration, decision file, and CLAUDE.md rewrite. Vibe Chief landing this version added the missing init.sh scaffolding + smoke test coverage so fresh installs and CI both get the new hook, then promoted the work to a tagged release. This is the first release where canon-level work originated outside Vibe Chief mode — worth flagging as a pattern (the Boss → Vibe Chief framework-feedback channel shipped in v0.2.3 is intended for exactly this kind of cross-boundary work, though Boss in this case wrote source directly rather than going through follow-ups/framework/).
+
 ## [unreleased] — v0.2.3 in progress — Discipline at the seams (2026-05-28)
 
 Three discipline shifts at the seams between Boss, Vibe Chief, and the operator: first-response output is now imperative (closes the "Boss didn't auto-boot on 'hi'" gap), Boss has a sanctioned channel to surface framework observations back to Vibe Chief, and all numerical claims must cite their source or label as guess. See `decisions/2026-05-28-feedback-channel-and-calibration.md` for the architecture.

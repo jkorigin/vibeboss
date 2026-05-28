@@ -969,6 +969,7 @@ write_file "$TEMPLATES/hq/STATE.md"                           "$HQ_PATH/STATE.md
 write_file "$TEMPLATES/hq/.claude/settings.json"              "$HQ_PATH/.claude/settings.json"
 write_file "$TEMPLATES/hq/.claude/hooks/boot.sh"              "$HQ_PATH/.claude/hooks/boot.sh"
 write_file "$TEMPLATES/hq/.claude/hooks/compact-boot.sh"      "$HQ_PATH/.claude/hooks/compact-boot.sh"
+write_file "$TEMPLATES/hq/.claude/hooks/update-handover.sh"   "$HQ_PATH/.claude/hooks/update-handover.sh"
 write_file "$TEMPLATES/hq/skills/dev-workflow/SKILL.md"       "$HQ_PATH/skills/dev-workflow/SKILL.md"
 write_file "$TEMPLATES/hq/skills/compact-handover/SKILL.md"   "$HQ_PATH/skills/compact-handover/SKILL.md"
 write_file "$TEMPLATES/hq/runlog/README.md"                   "$HQ_PATH/runlog/README.md"
@@ -1039,6 +1040,7 @@ info "Workspace-root redirect hook installed at $WORKSPACE/.claude"
 if ! $DRY_RUN; then
   chmod +x "$HQ_PATH/.claude/hooks/boot.sh"
   chmod +x "$HQ_PATH/.claude/hooks/compact-boot.sh"
+  chmod +x "$HQ_PATH/.claude/hooks/update-handover.sh"
   chmod +x "$WORKSPACE/.claude/hooks/redirect.sh"
 fi
 
