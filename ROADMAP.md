@@ -6,6 +6,26 @@ For what *is* shipped today, see [README.md](README.md#what-ships-today) and [CH
 
 ---
 
+## Recently shipped (v0.2.5)
+
+Agent-as-operator: the framework no longer assumes partner runs scripts. Boss + Vibe Chief + per-project build leads all execute CLI on partner's verbal request and report results, not commands. Closes the second weird trait partner flagged (the first — $10 cost parroting — was fixed in commit 28dab5a). See [decisions/2026-05-28-agent-as-operator.md](decisions/2026-05-28-agent-as-operator.md).
+
+- **LESSON-009 — Agent-as-operator.** Boss runs scripts; partner speaks intent. Hard-gated in `templates/hq/lessons.md`. The one exception is the unavoidable `bash init.sh` bootstrap.
+- **Partner-facing protocols section in `templates/hq/CLAUDE.md`.** Canonical mappings for "Apply the update", "Start a new project", "There's a framework bug", "Show me what's in the inbox" — Boss has a script for what to confirm, what to run via the Bash tool, and how to report results.
+- **CHIEF.md mirror.** Same shape for Vibe Chief: "Pull the latest", "Apply this to the workspace", "Address the framework feedback", "Ship this".
+- **Verbal-form update banner.** `templates/hq/.claude/hooks/boot.sh` rewritten from command-form ("Run `bash init.sh --update ...`") to verbal-form ("Say 'apply it' and I'll run it"). Regression-guarded in the smoke test.
+- **README rewrite.** User-facing sections (To *update*, Recommended companions) reframed as conversational flows. Quick Start bootstrap preserved (the one CLI moment) with an explicit "after this you never type a command again" follow-on. New "Reference: under the hood" appendix table maps verbal intent → underlying command for the technically curious.
+- **Per-project README mirror.** Build leads get the same Partner-facing protocols section — "Run the tests", "Ship this", "Fix the build", "Status update", etc.
+
+## Recently shipped (v0.2.4)
+
+Rolling handover mechanism — compact handover converted from agent self-discipline (T1-T5 triggers) to mechanism-driven enforcement via a Stop hook that fires every turn. See [decisions/2026-05-28-rolling-handover-mechanism.md](decisions/2026-05-28-rolling-handover-mechanism.md).
+
+- **`templates/hq/.claude/hooks/update-handover.sh`** — Stop hook (178 lines). Parses the live transcript JSONL each turn, writes `hq/handovers/_current.md` with last partner message, last agent response, and grepped markers (`KEYWORD:` / `REMEMBER:` / `TODO:` / etc.). Idempotent, never blocks the assistant.
+- **Stop hook registration** in `templates/hq/.claude/settings.json` using the `${CLAUDE_PROJECT_DIR}` portable path.
+- **`init.sh` scaffolds the new hook + makes it executable** on fresh install (the gap Vibe Chief caught when landing — Boss's draft registered the hook but didn't install it).
+- **CLAUDE.md "Compact handover" section rewritten** from "agent must self-detect T1-T5 and write a handover" to "Stop hook + compact-boot.sh do this automatically as the baseline; rich dated handovers are an optional override layer." The five triggers are reframed as opt-in moments for the rich layer.
+
 ## Recently shipped (v0.2.3)
 
 Three discipline shifts at the seams: Boss now outputs the boot brief proactively, has a sanctioned channel back to Vibe Chief for framework-level observations, and all numerical claims are now provenance-tagged. See [decisions/2026-05-28-feedback-channel-and-calibration.md](decisions/2026-05-28-feedback-channel-and-calibration.md).

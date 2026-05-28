@@ -2,7 +2,38 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
-## [unreleased] — v0.2.4 in progress — Rolling handover mechanism (2026-05-28)
+## [unreleased] — v0.2.5 in progress — Agent-as-operator (2026-05-28)
+
+The architectural shift partner asked for: *"users won't run scripts. you need to design the agents to handle all these things."* Vibeboss canon stops assuming partner types CLI commands. Boss, Vibe Chief, and per-project build leads run scripts on partner's verbal request and report results, not commands. The only unavoidable CLI moment is the one-time `bash init.sh` bootstrap (no agent exists yet at that moment).
+
+### Added
+
+- **LESSON-009 — Agent-as-operator. Boss runs scripts; partner speaks intent.** Hard-gated rule in `templates/hq/lessons.md`. When Vibeboss canon documents a CLI command (`init.sh --update`, `init.sh --add-project <name>`, `/plugin install <name>`, etc.), Boss is the executor; partner expresses intent verbally; Boss confirms briefly, runs via the Bash tool, and reports results.
+- **`## Partner-facing protocols` section in `templates/hq/CLAUDE.md`.** Five canonical intent → action mappings (Apply the update / Start a new project / There's a framework bug / Show me what's in the inbox / general "results-not-commands" rule). Each maps a verbal intent to: what Boss confirms with partner, the exact command Boss runs via the Bash tool, and how Boss reports the outcome.
+- **`## Partner-facing protocols (Vibe Chief)` section in `CHIEF.md`.** Framework-side mirror with four canonical mappings (Pull the latest / Apply this to the workspace / Address the framework feedback / Ship this).
+- **CHIEF.md discipline list gains bullet 8:** *"Run scripts on partner's verbal request. Per LESSON-009."*
+- **`## Partner-facing protocols` section in `templates/projects/_per_project/README.md`.** Project-level mirror with build-lead intent → action mappings (Run the tests / Ship this / Fix the build / Status update / Framework-level issue) plus a verbal-triggers table.
+- **README "Reference: under the hood (for the technically curious)" appendix.** Table mapping verbal intent → underlying command for technical readers who want to see what's running. Non-technical operators can ignore.
+- **Smoke test gains v0.2.5 coverage:** verifies LESSON-009 in lessons.md, Partner-facing protocols section in CLAUDE.md, verbal-form update banner in boot.sh, and regression-guards against the command-form banner returning.
+- `decisions/2026-05-28-agent-as-operator.md` — full decision documenting the architectural shift, the five-cluster scope of edits, why the protocols section is the operational handle, the bootstrap-CLI honesty, and the limits (model-behavior contract, finite protocols).
+
+### Changed
+
+- **Update banner in `templates/hq/.claude/hooks/boot.sh` rewritten.** Was: *"Run `bash $SOURCE_PATH/init.sh --update --workspace $WORKSPACE` to apply."* Now: *"Say 'apply it' or 'update vibeboss' and I'll pull the latest framework and apply the changes to this workspace. Files you've customized stay yours unless you say otherwise."* Banner points at the Partner-facing protocols section in CLAUDE.md for the executor reference.
+- **README user-facing sections rewritten.** *To update Vibeboss* now describes Boss surfacing the banner + partner saying "apply it"; CLI commands removed. *Recommended companions* now describes telling Boss what kind of project you're building rather than typing `/plugin install`. The Quick Start bootstrap block is preserved as the one CLI moment, with an explicit follow-on note: *"After this first install, you never type a command again."*
+- `VERSION` bumped to `0.2.5-dev`.
+- `ROADMAP.md` gained "Recently shipped (v0.2.5)" section above v0.2.4.
+
+### Removed
+
+- `decisions/2026-05-28-v025-agent-as-operator-planned.md` — superseded by the shipped decision file; planning file removed in this commit.
+
+### Deferred (v0.3.0+)
+
+- **Protocol generalization.** The Partner-facing protocols section has five canonical mappings. Boss has to generalize for everything else ("when in doubt, results not commands"). Future LESSONS may sharpen the heuristic if drift appears.
+- **Shell alias for the bootstrap step.** Phase 2's `vibeboss reno` alias may let us reduce the one CLI moment to a shorter word; won't eliminate it.
+
+## [v0.2.4] — 2026-05-28 — Rolling handover mechanism
 
 Compact handover converted from self-discipline ("agent remembers to write handover before /compact") to mechanism-driven enforcement. A `Stop` hook fires every turn and rewrites `hq/handovers/_current.md` with the last partner message, last agent response, and grepped markers — so at the moment Claude Code's auto-compact fires, a fresh handover always exists for `compact-boot.sh` to inject. Zero agent self-discipline required as the baseline. Rich dated handovers preserved as an optional override layer.
 
@@ -27,7 +58,7 @@ The original subsystem-E design required the agent to self-detect context-pressu
 
 Boss (live HQ session) drafted the Stop hook, settings.json registration, decision file, and CLAUDE.md rewrite. Vibe Chief landing this version added the missing init.sh scaffolding + smoke test coverage so fresh installs and CI both get the new hook, then promoted the work to a tagged release. This is the first release where canon-level work originated outside Vibe Chief mode — worth flagging as a pattern (the Boss → Vibe Chief framework-feedback channel shipped in v0.2.3 is intended for exactly this kind of cross-boundary work, though Boss in this case wrote source directly rather than going through follow-ups/framework/).
 
-## [unreleased] — v0.2.3 in progress — Discipline at the seams (2026-05-28)
+## [v0.2.3] — 2026-05-28 — Discipline at the seams
 
 Three discipline shifts at the seams between Boss, Vibe Chief, and the operator: first-response output is now imperative (closes the "Boss didn't auto-boot on 'hi'" gap), Boss has a sanctioned channel to surface framework observations back to Vibe Chief, and all numerical claims must cite their source or label as guess. See `decisions/2026-05-28-feedback-channel-and-calibration.md` for the architecture.
 
@@ -61,7 +92,7 @@ Three discipline shifts at the seams between Boss, Vibe Chief, and the operator:
 - **A categorize-feedback skill or LESSON-009** if Boss starts misrouting issues between `STATE.md` / runlog / decisions / `follow-ups/framework/`. Current heuristic relies on Boss recognizing "this is framework-level" — could drift.
 - **Automated calibration analysis** — a `vibeboss estimate <tag1>,<tag2>` helper that greps the log, computes median + range + n, and outputs the formatted citation. Today Boss does it inline via grep + manual median; a helper would make LESSON-008 cheaper to follow.
 
-## [unreleased] — v0.2.2 in progress — Update mechanism (2026-05-28)
+## [v0.2.2] — 2026-05-28 — Update mechanism
 
 Vibeboss workspaces can now receive framework updates safely. Per-workspace version pinning + per-file installed-original hashes let `init.sh --update` distinguish between files the user customized and files that still match the canonical install — refreshing the latter, prompting on the former. Boss surfaces a banner in the boot brief when updates are available.
 
@@ -87,7 +118,7 @@ Vibeboss workspaces can now receive framework updates safely. Per-workspace vers
 - **Three-way merge for customized files.** Current behavior on the "overwrite" path is to replace the workspace file wholesale. A three-way merge (current / installed-original / new-canonical) via `git merge-file` would let users adopt upstream changes without losing local edits in non-conflicting regions. Not shipped because it adds noise to the simple cases without proportional benefit.
 - **Versions as sortable tuples instead of lex strings.** The migration runner sorts filenames lexically — fine until we cross x.10 (where `0.10.0` sorts before `0.2.0`). Fix by parsing semver into tuples and sorting numerically.
 
-## [unreleased] — v0.2.1 in progress — PPSB foundation (2026-05-28)
+## [v0.2.1] — 2026-05-28 — PPSB foundation
 
 The Per-Project Skill Bundle (PPSB) architecture lands. Every project Boss creates now ships its own `.claude/settings.json` with `superpowers@claude-plugins-official` enabled by default, plus symlinks to Vibeboss's native skills. Per-project, never machine-wide. Also: STOP-file kill switch (closes a Phase 1 ROADMAP item), bidirectional inbox topology (stolen from <coordinator-agent> in `<other-multi-repo>/`), and a recommended-companions doc surface.
 

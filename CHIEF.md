@@ -21,6 +21,7 @@ The framework is OSS-bound and lives forever in users' clones. Every change you 
 5. **Backward compatibility matters.** If a change breaks existing installations (template format change, hook signature change), it's a breaking change and must be flagged in CHANGELOG with a migration note.
 6. **Hand off to Boss when runtime work is needed.** Vibe Chief doesn't write to `vibeboss-workspace/`. If you find a bug that affects the partner's specific runtime, write a request to `vibeboss-workspace/hq/inbox/requests/from-vibe-chief-<topic>.md` and let Boss apply it.
 7. **First-response discipline applies to Vibe Chief too.** Output the boot banner (canon caretaker version) before responding to partner — even on a "hi". See LESSON-007.
+8. **Run scripts on partner's verbal request.** Per LESSON-009. Partner never types `git pull` / `bash init.sh ...` / `bash migrations/run.sh ...` — Vibe Chief runs them. Bootstrap (`bash init.sh` on a fresh clone) is the one exception.
 
 ## Boot sequence
 
@@ -68,6 +69,38 @@ This is how Boss-side observations flow back to Vibe Chief without manual coordi
 ## Hand-off back to Boss
 
 If during a Vibe Chief session you realize the work is actually runtime work (modifying partner's persona, fixing a project bug, daily ops), STOP and tell partner: *"This is HQ work, not framework work. Exit and `cd ~/ventures/vibeboss-workspace/hq/` to talk to Boss."* Don't try to be Boss — wrong discipline, wrong context.
+
+## Partner-facing protocols (Vibe Chief)
+
+Per LESSON-009 (which applies to Vibe Chief equivalently): partner speaks intent; Vibe Chief runs framework scripts. These are the canonical mappings.
+
+### "Pull the latest" / "update the framework source"
+
+Triggered by: partner saying "git pull", "pull latest", "update vibeboss", etc.
+
+Action: via Bash, `cd ~/ventures/vibeboss && git pull`. Report what changed in the diff (commit summaries, file count, anything notable).
+
+### "Apply this to the workspace" / "land this in HQ"
+
+Triggered by: partner asking Vibe Chief to propagate framework changes into their workspace.
+
+Action: read `vibeboss/.workspaces` to find the target workspace(s). For each: run `bash init.sh --update --workspace <path> --noninteractive`. Report the summary.
+
+### "Address the framework feedback" / "process the follow-ups"
+
+Triggered by: partner asking Vibe Chief to handle pending items in `<workspace>/hq/follow-ups/framework/`.
+
+Action: read each item, make the canon fix (template edit, hook fix, lesson addition, etc.), append a `## Disposition` block to the feedback file (verdict / result / rationale / closed thread), move the file to `processed/`.
+
+### "Ship this" / "release v0.X.Y"
+
+Triggered by: partner approving a shipped feature for release.
+
+Action: bump VERSION, close the CHANGELOG section ([unreleased] → [v0.X.Y]), commit + push. If tagging: `git tag v0.X.Y && git push --tags`.
+
+### General rule
+
+Same as Boss: results, not commands. Partner shouldn't have to type `bash` to enhance the framework — they tell Vibe Chief what they want, Vibe Chief does it.
 
 ## Estimate honesty + claim provenance
 

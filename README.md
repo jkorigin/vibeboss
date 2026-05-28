@@ -23,21 +23,19 @@ cd ~/ventures/vibeboss-workspace/hq && claude
 
 The init script asks 6 questions (with sensible defaults — just press Enter through). When Claude Code opens in `hq/`, your AI lead **Boss** auto-boots with a briefing and asks what you want to build.
 
+After this first install, you never type a command again. You talk to Boss; Boss handles the rest. Need to update later? Just say so. Want a new project? Just say so. Per LESSON-009 — agent-as-operator.
+
 ### To *update* Vibeboss (existing install)
 
-When the framework gets new releases, pull updates into your existing workspace without losing customizations:
+You don't run anything — Boss does. When Boss boots and sees the framework has moved ahead of your workspace, it surfaces a banner:
 
-```bash
-# 1. Pull the latest framework
-cd ~/ventures/vibeboss && git pull
+> *Vibeboss update available: v0.2.4 → v0.2.5. Say "apply it" or "update vibeboss" and I'll pull the latest framework and apply the changes to this workspace.*
 
-# 2. Apply the update to your workspace
-bash ~/ventures/vibeboss/init.sh --update
-```
+Say yes (or "apply it", or "go ahead") and Boss handles the rest: pulls the latest framework source, applies the changes, prompts you only on files you've customized (keep / overwrite / view diff / skip). `--noninteractive` defaults to "keep" so a quick "go ahead" never overwrites your edits.
 
-The update script compares every template-derived file in your workspace against its installed-original hash. Files you haven't touched get refreshed automatically. Files you've customized prompt you to keep, overwrite, view a diff, or skip. Breaking-change migrations (versioned shell scripts under `vibeboss/migrations/`) run in sequence between your installed version and the target. Add `--noninteractive` to default to "keep your customizations" without prompts.
+Breaking-change migrations run automatically in sequence between your installed version and the target.
 
-Boss surfaces a banner in the boot brief when an update is available, so you don't have to remember to check.
+If you'd rather skip the banner and just check: ask Boss *"is there a Vibeboss update?"* anytime — Boss checks `.vibeboss-version` against the source's current VERSION.
 
 ### To *enhance* Vibeboss (you're a contributor/maintainer)
 
@@ -72,9 +70,9 @@ For what's planned but not yet built (autonomous loop, verification tooling, Mai
 
 Vibeboss is a memory + workflow harness; the heavy lifting comes from Claude Code skills.
 
-**Always on (baseline):** every Vibeboss workspace and every Boss-created project ships with **superpowers** enabled — Jesse Vincent's MIT-licensed collection covering brainstorming, TDD, debugging, parallel-agent dispatch, plans, and code review. Part of Anthropic's official Claude Code marketplace, so it activates automatically on first session. Vibeboss's `dev-workflow` skill explicitly invokes superpowers (`brainstorming`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`) — without it, those steps degrade.
+**Always on (baseline):** every Vibeboss workspace ships with **superpowers** enabled — Jesse Vincent's MIT-licensed collection covering brainstorming, TDD, debugging, parallel-agent dispatch, plans, and code review. Part of Anthropic's official Claude Code marketplace, so it activates automatically on first session. Vibeboss's `dev-workflow` skill explicitly invokes superpowers (`brainstorming`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`) — without it, those steps degrade.
 
-**Worth adding — curated to three.** Install per project with `/plugin install <name>@claude-plugins-official` inside a Claude Code session, or pre-enable in the project's `.claude/settings.json`:
+**Worth adding — curated to three.** Tell Boss what you're building and Boss enables the right ones for the project. You can also name them directly: *"Boss, enable context7 for this project."*
 
 - **context7** — live library documentation lookup. Better than training-data recall for any current API. Useful in nearly every project.
 - **playwright** — browser-based QA. Essential the moment your project touches a web UI.
@@ -91,7 +89,7 @@ Vibeboss is a memory + workflow harness; the heavy lifting comes from Claude Cod
 
 **External — reference, not a recommendation:**
 
-- **gstack** ([garrytan/gstack](https://github.com/garrytan/gstack)) — Garry Tan's 40+ skill bundle. Comprehensive but heavy: installs machine-wide under `~/.claude/skills/gstack/`, requires Bun, writes to `~/.gstack/`. Worth a look if Vibeboss's curated set feels too thin. Install per upstream README.
+- **gstack** ([garrytan/gstack](https://github.com/garrytan/gstack)) — Garry Tan's 40+ skill bundle. Comprehensive but heavy: installs machine-wide under `~/.claude/skills/gstack/`, requires Bun, writes to `~/.gstack/`. Worth a look if Vibeboss's curated set feels too thin. Tell Boss *"install gstack"* and Boss will walk you through the upstream install (it's a global install, not a Vibeboss flow).
 
 Vibeboss never auto-clones any of these.
 
@@ -109,6 +107,22 @@ Vibeboss never auto-clones any of these.
 - Don't want to learn Git, terminal, or technical configuration
 - Want AI to handle the work without 50 confirmation prompts
 - Need to trust that the AI won't drift, forget, or quietly break things
+
+## Reference: under the hood (for the technically curious)
+
+Partner doesn't need to know these — Boss handles everything via verbal intent (per LESSON-009). But if you want to see what's actually running:
+
+| Verbal intent | What Boss runs |
+|---|---|
+| *"Apply the update"* | `git -C <source> pull` then `bash <source>/init.sh --update --workspace <workspace> --noninteractive` |
+| *"Start a new project called X"* | `bash <source>/init.sh --add-project X --workspace <workspace>` |
+| *"Install context7 for this project"* | Adds `"context7@claude-plugins-official": true` to `<project>/.claude/settings.json` `enabledPlugins`; Claude Code activates on next session |
+| *"There's a framework bug"* | Writes `hq/follow-ups/framework/YYYY-MM-DD-<slug>.md` describing the issue; Vibe Chief picks it up next `bash reno.sh` session |
+| *"Halt everything"* (kill switch) | `touch <workspace>/STOP` or `touch <workspace>/hq/STOP`; Boss refuses new work until you remove the file AND re-authorize |
+
+Boss runs each of these via the Bash tool on your verbal approval. You don't type any of it.
+
+The first `bash init.sh` (bootstrap) is the one exception — no agent exists yet, so you run it once. After that, all CLI is Boss's domain.
 
 ## License
 

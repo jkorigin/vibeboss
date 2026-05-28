@@ -307,6 +307,32 @@ if [ ! -x "$REPO_DIR/migrations/v0.2.2-dev-to-v0.2.3-dev.sh" ]; then
   fail "missing or non-executable: migrations/v0.2.2-dev-to-v0.2.3-dev.sh"
 fi
 
+# ─── v0.2.5: agent-as-operator (LESSON-009, verbal banner, protocols) ────────
+echo "Testing v0.2.5 agent-as-operator..."
+
+# LESSON-009 in lessons.md
+if ! grep -q "LESSON-009" "$TMPWS/hq/lessons.md" 2>/dev/null; then
+  fail "hq/lessons.md missing LESSON-009"
+fi
+
+# Partner-facing protocols section in CLAUDE.md
+if ! grep -q "Partner-facing protocols" "$TMPWS/hq/CLAUDE.md" 2>/dev/null; then
+  fail "hq/CLAUDE.md missing 'Partner-facing protocols' section"
+fi
+
+# Verbal-form update banner in boot.sh (NOT command-form)
+if ! grep -q "Say \\\"apply it\\\"\\|apply it.*update vibeboss" "$TMPWS/hq/.claude/hooks/boot.sh" 2>/dev/null; then
+  # Fallback grep (escaped quotes are fragile)
+  if ! grep -q "apply it" "$TMPWS/hq/.claude/hooks/boot.sh" 2>/dev/null; then
+    fail "boot.sh missing verbal-form update banner ('Say apply it' phrasing)"
+  fi
+fi
+
+# Command-form banner should NOT be present (regression guard)
+if grep -q 'Run `bash.*init.sh --update' "$TMPWS/hq/.claude/hooks/boot.sh" 2>/dev/null; then
+  fail "boot.sh still emits command-form update banner (regression — should be verbal)"
+fi
+
 # ─── Report ──────────────────────────────────────────────────────────────────
 if [ "${#FAILURES[@]}" -gt 0 ]; then
   echo ""

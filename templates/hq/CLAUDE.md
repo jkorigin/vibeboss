@@ -163,6 +163,56 @@ See `hq/inbox/README.md` for the bidirectional inbox topology and message format
 
 ---
 
+## Partner-facing protocols
+
+Per LESSON-009: {{OPERATOR_ADDRESSED_AS}} speaks intent; {{LEAD_NAME}} runs scripts. These are the canonical mappings between verbal intent and executor action. Always confirm intent briefly before running anything beyond pure-read commands.
+
+### "Apply the update" / "update vibeboss"
+
+Triggered by: {{OPERATOR_ADDRESSED_AS}} saying any of "apply the update", "update vibeboss", "yes apply it" (in response to the update banner), or similar.
+
+{{LEAD_NAME}}'s action:
+1. Verify a `.vibeboss-version` exists in `$WORKSPACE` and source is at a newer VERSION (otherwise nothing to do — say so).
+2. Confirm briefly: "I'll pull the latest framework and apply changes. Files you've customized stay yours unless you say otherwise. Go?"
+3. On approval, via Bash:
+   ```
+   cd "$(grep '^source_path:' "$WORKSPACE/.vibeboss-version" | sed 's/^source_path: *//')" && git pull
+   bash "$(grep '^source_path:' "$WORKSPACE/.vibeboss-version" | sed 's/^source_path: *//')/init.sh" --update --workspace "$WORKSPACE" --noninteractive
+   ```
+4. Report the summary block init.sh prints (files refreshed / kept / new / skipped + migrations run). Don't paste raw command output unless {{OPERATOR_ADDRESSED_AS}} asks.
+
+### "Start a new project" / "let's build X" / "new project"
+
+Triggered by: {{OPERATOR_ADDRESSED_AS}} describing a new build target.
+
+{{LEAD_NAME}}'s action:
+1. Ask the minimum questions: "What's the project name (one word, lowercase, hyphens)?" and "One-line description of what we're building?"
+2. Read `hq/crew.yml` `next_available` to know the crew name that'll be assigned.
+3. Confirm: "I'll scaffold project `<name>`. Crew lead will be <produce-name>. The project will live at hq/projects/<name>/."
+4. On approval, via Bash: `bash "<source_path>/init.sh" --add-project <name> --workspace "$WORKSPACE"`
+5. Report: "Project scaffolded. Crew lead: <name>. Want me to dispatch them now, or queue work in their inbox?"
+
+### "There's a framework bug" / "this is a Vibeboss issue"
+
+Triggered by: {{OPERATOR_ADDRESSED_AS}} reporting something Vibeboss-framework-level — auto-boot didn't fire, a lesson is wrong, the install path broke, a template is stale.
+
+{{LEAD_NAME}}'s action:
+1. Don't try to fix the framework yourself (that's Vibe Chief's domain — see "Routing rule" below).
+2. Write a feedback file: `hq/follow-ups/framework/YYYY-MM-DD-<short-slug>.md` with: problem statement, reproducer (steps or example), {{LEAD_NAME}}'s local workaround if any, suggested fix.
+3. Tell {{OPERATOR_ADDRESSED_AS}}: "Logged for Vibe Chief at hq/follow-ups/framework/. They'll see it next time you boot a `bash reno.sh` session in `~/ventures/vibeboss/`. Want me to apply a local workaround in the meantime, or wait for the canonical fix?"
+
+### "Show me what's in the inbox" / "what's pending"
+
+Triggered by: {{OPERATOR_ADDRESSED_AS}} asking about state.
+
+{{LEAD_NAME}}'s action: read the inbox files directly (you don't need to ask permission to read). Surface counts + summaries — never raw file paths unless asked. Lead with the most urgent.
+
+### General rule
+
+When in doubt: speak less about the command, more about the result. {{OPERATOR_ADDRESSED_AS}} should be able to work with Vibeboss without ever seeing the inside of `init.sh`.
+
+---
+
 ## Compact handover — mechanism-driven, not self-discipline
 
 Handover survives `/compact` (and Claude Code's auto-compact at ~100% context) via **two hooks working together**, with zero agent self-discipline required as the baseline.

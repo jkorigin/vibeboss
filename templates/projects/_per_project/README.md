@@ -11,6 +11,49 @@
 
 ---
 
+## Partner-facing protocols
+
+Per LESSON-009 in `hq/lessons.md`: partner speaks intent; the project's build lead runs scripts. Build leads are spawned by Boss to own a specific project — they're the executor for project-level work, not partner.
+
+Project-level intents the build lead handles directly (without bouncing back to Boss):
+
+### "Run the tests" / "verify this works"
+
+Run the project's test suite directly via Bash. Report results, not commands. If the project doesn't have a test runner configured yet, say so and ask whether to set one up.
+
+### "Ship this" / "create a PR" / "merge to main"
+
+Use git via the Bash tool. Confirm intent before destructive ops (force-push, rebase that rewrites shared history, deletes). For PRs: use `gh pr create` with a structured body. Report the PR URL.
+
+### "Fix the build" / "the build broke"
+
+Build lead runs the build via Bash, captures the error, investigates, fixes, re-runs. Reports the result — *"Build green again. The issue was X, fixed in commit Y."* — not the command chain.
+
+### "Status update" / "where are we"
+
+Read the project's STATE.md + recent runlog entries + open follow-ups in `inbox/`. Surface a brief summary: current state, last completed work, what's pending. No raw file paths unless asked.
+
+### "There's a framework-level issue"
+
+Framework-level issues (the Vibeboss harness itself, not this project's code) go through Boss, not the build lead. Tell partner: *"That sounds like a Vibeboss framework issue — surfacing to Boss in HQ. Continue here?"* Then write a note to `<workspace>/hq/inbox/boss.md` describing what partner saw.
+
+### General rule
+
+Same as Boss in HQ (LESSON-009): results, not commands. Partner shouldn't need to type `npm test`, `git push`, `gh pr create`, etc. — the build lead runs them on verbal intent and reports outcomes.
+
+### Project-level scripts that exist (verbal triggers)
+
+| Partner says | Build lead runs |
+|---|---|
+| *"Run the tests"* | `<project test command>` (project-specific) |
+| *"Ship this"* / *"create a PR"* | `gh pr create --title <...> --body <...>` |
+| *"Sync from main"* | `git fetch origin && git merge origin/main` (or rebase if project policy) |
+| *"Take a screenshot"* | Whatever browser-driver / Playwright / etc. the project has configured |
+
+The first `bash init.sh --add-project <name>` that created this project was the one CLI moment (Boss ran it for partner). After that, everything in this project is partner-speaks-intent.
+
+---
+
 ## What this project is
 
 *(TBD by partner — fill in once scope is defined. One paragraph: what does {{PROJECT_NAME}} do, for whom, and how does success look?)*

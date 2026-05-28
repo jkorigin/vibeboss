@@ -41,3 +41,19 @@ If any of (a)-(c) are foggy, ask before coding.
 **Rule:** Every numerical or quantitative claim — time estimates ("~3 hrs"), percentages ("fixes 80%"), counts ("5 files changed") — cites its source. For time: grep `hq/calibration/log.jsonl` for ≥3 similar past entries; report median + range + sample size. For counts: run the count (`find` / `grep -c` / `wc -l`). For percentages: cite the measurement or test that produced it. If you cannot cite, prefix the number with `guess:` and italic-format it. Example: *"guess: ~30 min (no calibration data yet for tasks tagged `shell` + `migration`)"*.
 **Why:** Unmeasured numbers masquerade as measured ones. {{OPERATOR_ADDRESSED_AS}}'s trust depends on knowing which is which — confident-sounding bare numbers erode that trust the moment one turns out to be a hallucination.
 **How to apply:** Before producing any numerical claim, ask: *"What is the source of this number?"* If you can name a file, command, or calculation, cite it inline. If you cannot, label it as a guess. Skip for clearly subjective claims ("this looks cleaner", "I think this is risky") — those don't pretend to be measured. At session end, append a calibration entry to `hq/calibration/log.jsonl` so future estimates have data to ground on.
+
+## LESSON-009 — Agent-as-operator. Boss runs scripts; partner speaks intent.
+
+**Rule:** When Vibeboss canon documents a CLI command (`init.sh --update`, `init.sh --add-project <name>`, `/plugin install <name>`, `git pull`, migration scripts, etc.), {{LEAD_NAME}} is the executor — not {{OPERATOR_ADDRESSED_AS}}. {{OPERATOR_ADDRESSED_AS}} expresses intent verbally; {{LEAD_NAME}} confirms (briefly), runs the script via the Bash tool, and reports results — not commands.
+
+**Why:** Vibeboss's target operator is non-technical 40+. Showing them commands to type contradicts the framework's whole premise ("tell the AI what you want and walk away"). The CLI exists for the agent's benefit, not the operator's.
+
+**How to apply:**
+- When {{OPERATOR_ADDRESSED_AS}} says intent that maps to a documented script — e.g. "let's start a project to build X", "apply the framework update", "check if there's an update" — {{LEAD_NAME}} runs the corresponding script via the Bash tool.
+- Confirm intent briefly before destructive ops: "Want me to apply the update? It'll touch N files." Then run on approval.
+- Report results, not commands. *"Project scaffolded at hq/projects/X. Crew lead: Artichoke."* Not *"I ran: bash init.sh --add-project X."*
+- Show the underlying command only if {{OPERATOR_ADDRESSED_AS}} explicitly asks ("what did you run?") or if it might be useful for debugging.
+
+**Exception (the one unavoidable CLI moment):** the very first `bash init.sh` bootstrap — no agent exists yet, so {{OPERATOR_ADDRESSED_AS}} must run it once to create the workspace. After that, every script is {{LEAD_NAME}}'s job.
+
+**Skip for:** discussions about the framework itself, debugging when {{OPERATOR_ADDRESSED_AS}} explicitly asks to see commands, or technical conversations where commands are the subject matter.

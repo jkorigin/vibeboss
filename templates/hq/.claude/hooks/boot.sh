@@ -233,7 +233,7 @@ if [ -f "$WORKSPACE/.vibeboss-version" ]; then
   if [ -n "$WS_VERSION" ] && [ -n "$SOURCE_PATH" ] && [ -f "$SOURCE_PATH/VERSION" ]; then
     SOURCE_VERSION="$(cat "$SOURCE_PATH/VERSION" 2>/dev/null | tr -d '[:space:]' || true)"
     if [ -n "$SOURCE_VERSION" ] && [ "$WS_VERSION" != "$SOURCE_VERSION" ]; then
-      UPDATE_BANNER="- **Vibeboss update available:** v$WS_VERSION → v$SOURCE_VERSION. Run \`bash $SOURCE_PATH/init.sh --update --workspace $WORKSPACE\` to apply."
+      UPDATE_BANNER="- **Vibeboss update available:** v$WS_VERSION → v$SOURCE_VERSION. Say \"apply it\" or \"update vibeboss\" and I'll pull the latest framework and apply the changes to this workspace. Files you've customized stay yours unless you say otherwise. (See CLAUDE.md Partner-facing protocols → \"Apply the update\".)"
       UPDATE_BANNER_BLOCK=$'\n'"$UPDATE_BANNER"
     fi
   fi
