@@ -223,6 +223,22 @@ NEXT_ITEMS="$(awk '
 ' "$HQ/STATE.md" 2>/dev/null || true)"
 [ -z "$NEXT_ITEMS" ] && NEXT_ITEMS="  none"
 
+# Update check: compare workspace's pinned version against source repo's VERSION.
+# Defensive — any failure silently yields no banner; boot must not break.
+UPDATE_BANNER=""
+UPDATE_BANNER_BLOCK=""
+if [ -f "$WORKSPACE/.vibeboss-version" ]; then
+  WS_VERSION="$(grep '^version:' "$WORKSPACE/.vibeboss-version" 2>/dev/null | head -1 | sed 's/^version: *//' || true)"
+  SOURCE_PATH="$(grep '^source_path:' "$WORKSPACE/.vibeboss-version" 2>/dev/null | head -1 | sed 's/^source_path: *//' || true)"
+  if [ -n "$WS_VERSION" ] && [ -n "$SOURCE_PATH" ] && [ -f "$SOURCE_PATH/VERSION" ]; then
+    SOURCE_VERSION="$(cat "$SOURCE_PATH/VERSION" 2>/dev/null | tr -d '[:space:]' || true)"
+    if [ -n "$SOURCE_VERSION" ] && [ "$WS_VERSION" != "$SOURCE_VERSION" ]; then
+      UPDATE_BANNER="- **Vibeboss update available:** v$WS_VERSION → v$SOURCE_VERSION. Run \`bash $SOURCE_PATH/init.sh --update --workspace $WORKSPACE\` to apply."
+      UPDATE_BANNER_BLOCK=$'\n'"$UPDATE_BANNER"
+    fi
+  fi
+fi
+
 # Closing line depends on inbox state
 if [ "$INBOX_TOTAL" -gt 0 ]; then
   CLOSING="Inbox has ${INBOX_TOTAL} item(s) — start there?"
@@ -248,7 +264,7 @@ ${CREW_DISPLAY}
 - **Open questions:**
 ${OPEN_QS}
 - **Next (top 3):**
-${NEXT_ITEMS}
+${NEXT_ITEMS}${UPDATE_BANNER_BLOCK}
 
 ${CLOSING}
 BRIEF_EOF

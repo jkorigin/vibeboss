@@ -2,6 +2,32 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
+## [unreleased] — v0.2.2 in progress — Update mechanism (2026-05-28)
+
+Vibeboss workspaces can now receive framework updates safely. Per-workspace version pinning + per-file installed-original hashes let `init.sh --update` distinguish between files the user customized and files that still match the canonical install — refreshing the latter, prompting on the former. Boss surfaces a banner in the boot brief when updates are available.
+
+### Added
+
+- **`<workspace>/.vibeboss-version`** written at every fresh install and updated at every `--update` completion. Records `version`, `source_path`, `source_sha` (git rev-parse of the Vibeboss source at install time, or "unknown"), `installed_at`, `updated_at` (ISO 8601 UTC).
+- **`<workspace>/.vibeboss/originals/<rel-path>.sha256` manifest.** Every template-derived file gets its post-substitute SHA256 stored at install. This is the load-bearing source of truth for "did the user customize this file?" Without it, every update decision is a guess.
+- **`init.sh --update` mode.** Walks the templates tree against an existing workspace. Decision tree per file: missing → create (legacy); unchanged from original → refresh + update hash; customized → prompt (keep / overwrite / view-diff / skip), `--noninteractive` defaults to keep; original missing (legacy workspace) → adopt current as authoritative. Runs migrations between installed and target version, then writes the updated `.vibeboss-version`. Prints a summary block at the end.
+- **`migrations/` directory + runner.** New top-level dir at `vibeboss/migrations/` with `run.sh` (the runner) + `README.md` (convention docs) + a sample no-op migration `v0.2.1-dev-to-v0.2.2-dev.sh`. Each migration takes `$1 = workspace path`, must be idempotent, exits 0 on success. `init.sh --update` invokes the runner with installed + target versions; the runner lex-sorts applicable scripts and executes the chain.
+- **Boss boot banner.** `templates/hq/.claude/hooks/boot.sh` now reads `<workspace>/.vibeboss-version` + `<source>/VERSION`; if they differ, appends `**Vibeboss update available:** vX → vY. Run \`...init.sh --update --workspace ...\`` to the brief. Silent fail if any piece is missing or malformed; never blocks boot. STOP-file path unaffected.
+- **README "To *update* Vibeboss" section** between Quick Start and "To enhance Vibeboss" — documents the `git pull && bash init.sh --update` flow, the refresh-vs-prompt semantics, and the `--noninteractive` automation default.
+- **Smoke test extended** to exercise the update path: install, simulate stale workspace by editing `.vibeboss-version`, run `--update --noninteractive`, verify the version metadata is updated and migrations runner is invoked. Banner check: verify `boot.sh --brief-only` includes the banner when stale, omits when current.
+- `decisions/2026-05-28-update-mechanism.md` — documents the architecture (version pinning + manifest + per-file resolution + migrations as a separate channel + Boss banner), why per-file resolution is the right grain, the lex-comparison caveat for version sorting, and the no-three-way-merge limit.
+
+### Changed
+
+- `init.sh` grew ~200 lines for the update flow. New helpers `hash_file()`, `hash_string()`, `write_manifest_hash()`, `write_version_metadata()`. `write_file()` extended to write a manifest entry for every file it writes. Updated `usage()` heredoc; updated success-block hint to point at `--update` as the future-update path.
+- `VERSION` bumped to `0.2.2-dev`.
+- `ROADMAP.md` updated: new "Recently shipped (v0.2.2)" section above the v0.2.1 one tracking the update mechanism.
+
+### Deferred (v0.3.0+)
+
+- **Three-way merge for customized files.** Current behavior on the "overwrite" path is to replace the workspace file wholesale. A three-way merge (current / installed-original / new-canonical) via `git merge-file` would let users adopt upstream changes without losing local edits in non-conflicting regions. Not shipped because it adds noise to the simple cases without proportional benefit.
+- **Versions as sortable tuples instead of lex strings.** The migration runner sorts filenames lexically — fine until we cross x.10 (where `0.10.0` sorts before `0.2.0`). Fix by parsing semver into tuples and sorting numerically.
+
 ## [unreleased] — v0.2.1 in progress — PPSB foundation (2026-05-28)
 
 The Per-Project Skill Bundle (PPSB) architecture lands. Every project Boss creates now ships its own `.claude/settings.json` with `superpowers@claude-plugins-official` enabled by default, plus symlinks to Vibeboss's native skills. Per-project, never machine-wide. Also: STOP-file kill switch (closes a Phase 1 ROADMAP item), bidirectional inbox topology (stolen from <coordinator-agent> in `<other-multi-repo>/`), and a recommended-companions doc surface.

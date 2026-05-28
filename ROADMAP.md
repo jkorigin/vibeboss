@@ -6,6 +6,15 @@ For what *is* shipped today, see [README.md](README.md#what-ships-today) and [CH
 
 ---
 
+## Recently shipped (v0.2.2)
+
+Update mechanism — running workspaces can now receive framework updates safely. See [decisions/2026-05-28-update-mechanism.md](decisions/2026-05-28-update-mechanism.md) for the design.
+
+- **Version pinning + manifest.** Every install writes `<workspace>/.vibeboss-version` (records pinned version + source path + source git SHA + timestamps) and a `<workspace>/.vibeboss/originals/<rel-path>.sha256` manifest of every template-derived file's hash at install time. This is the foundation that makes "did the user customize this file?" answerable.
+- **`init.sh --update` mode.** Walks the templates tree against an existing workspace. For each file: if the workspace copy matches its installed-original hash, refresh safely; if it doesn't, prompt (keep/overwrite/diff/skip). `--noninteractive` defaults to keep, so cron-like automations stay safe. Backfills missing manifest entries for legacy workspaces.
+- **Migrations infrastructure.** `vibeboss/migrations/` directory + a `run.sh` runner. Each migration is a versioned shell script (`v<from>-to-v<to>.sh`) that takes the workspace path. `--update` runs the applicable chain in lex order between installed and target versions. Documented convention; sample no-op migration shipped.
+- **Boss boot banner.** When `<workspace>/.vibeboss-version` shows a version older than the source's `VERSION`, the boot brief surfaces a banner with the exact update command. Silent fail if the version file is missing or malformed — never blocks boot.
+
 ## Recently shipped (v0.2.1)
 
 The Per-Project Skill Bundle (PPSB) arc — every Boss-created project inherits a sane skill bundle, with superpowers as the always-on baseline. See [decisions/2026-05-28-per-project-skill-bundle.md](decisions/2026-05-28-per-project-skill-bundle.md) for the design.

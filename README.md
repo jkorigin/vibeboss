@@ -23,6 +23,22 @@ cd ~/ventures/vibeboss-workspace/hq && claude
 
 The init script asks 6 questions (with sensible defaults — just press Enter through). When Claude Code opens in `hq/`, your AI lead **Boss** auto-boots with a briefing and asks what you want to build.
 
+### To *update* Vibeboss (existing install)
+
+When the framework gets new releases, pull updates into your existing workspace without losing customizations:
+
+```bash
+# 1. Pull the latest framework
+cd ~/ventures/vibeboss && git pull
+
+# 2. Apply the update to your workspace
+bash ~/ventures/vibeboss/init.sh --update
+```
+
+The update script compares every template-derived file in your workspace against its installed-original hash. Files you haven't touched get refreshed automatically. Files you've customized prompt you to keep, overwrite, view a diff, or skip. Breaking-change migrations (versioned shell scripts under `vibeboss/migrations/`) run in sequence between your installed version and the target. Add `--noninteractive` to default to "keep your customizations" without prompts.
+
+Boss surfaces a banner in the boot brief when an update is available, so you don't have to remember to check.
+
 ### To *enhance* Vibeboss (you're a contributor/maintainer)
 
 ```bash

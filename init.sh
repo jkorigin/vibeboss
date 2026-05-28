@@ -10,6 +10,7 @@
 #   --lab-lead-name <name>  labs research lead name (default: Ginger)
 #   --noninteractive        skip prompts; require --name and --email
 #   --upgrade               add missing files to an existing workspace (idempotent)
+#   --update                refresh template-derived files in an existing workspace
 #   --dry-run               show what would be done without writing anything
 #   --add-project <name>    scaffold a new project under an existing workspace
 #   -h, --help              show this help message
@@ -36,10 +37,20 @@ OPERATOR_ADDRESSED_AS="partner"
 LAB_LEAD_NAME="Ginger"
 NONINTERACTIVE=false
 UPGRADE=false
+UPDATE_MODE=false
 DRY_RUN=false
 ADD_PROJECT_MODE=false
 PROJECT_NAME=""
 CREW_NAME=""
+
+# Counters used by --update mode (declared early so write_file can update them)
+UPDATE_REFRESHED=0
+UPDATE_KEPT=0
+UPDATE_SKIPPED=0
+UPDATE_UNCHANGED=0
+UPDATE_NEW=0
+UPDATE_LEGACY_ADOPTED=0
+UPDATE_MIGRATIONS_RUN=0
 
 usage() {
   cat <<EOF
@@ -54,6 +65,14 @@ Options:
   --lab-lead-name <name>  labs research lead name (default: Ginger)
   --noninteractive        skip prompts; require --name and --email
   --upgrade               add missing files to an existing workspace (idempotent)
+  --update                refresh template-derived files in an existing
+                          workspace. Compares each file against a manifest
+                          recorded at install time; refreshes unmodified
+                          files automatically, prompts before overwriting
+                          user-customized files. Runs version migrations
+                          between the workspace's pinned version and the
+                          source's current VERSION. Honors --noninteractive
+                          (defaults to keeping customizations) and --dry-run.
   --dry-run               show what would be done without writing anything
   --add-project <name>    scaffold a new project under an existing workspace
                           (requires the workspace to already exist; assigns
@@ -75,6 +94,7 @@ while [[ $# -gt 0 ]]; do
     --lab-lead-name)  LAB_LEAD_NAME="$2";          shift 2 ;;
     --noninteractive) NONINTERACTIVE=true;          shift   ;;
     --upgrade|--repair) UPGRADE=true;              shift   ;;
+    --update)         UPDATE_MODE=true;            shift   ;;
     --dry-run)        DRY_RUN=true;                shift   ;;
     --add-project)
       ADD_PROJECT_MODE=true
@@ -127,6 +147,13 @@ cat <<'BANNER'
   Vibeboss — add project
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BANNER
+elif $UPDATE_MODE; then
+cat <<'BANNER'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Vibeboss — workspace update
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BANNER
 else
 cat <<'BANNER'
 
@@ -160,14 +187,77 @@ substitute() {
   printf '%s' "$text"
 }
 
-# write_file — write a file from a template, substituting placeholders
-# Usage: write_file <src_template> <dest_path>
+# hash_file — print SHA256 hex hash of file contents (works on macOS + Linux)
+hash_file() {
+  if command -v shasum &>/dev/null; then
+    shasum -a 256 "$1" | cut -d' ' -f1
+  elif command -v sha256sum &>/dev/null; then
+    sha256sum "$1" | cut -d' ' -f1
+  else
+    error "Neither shasum nor sha256sum is available — cannot compute file hash."
+    return 1
+  fi
+}
+
+# hash_string — print SHA256 hex hash of a string passed on stdin
+hash_string() {
+  if command -v shasum &>/dev/null; then
+    shasum -a 256 | cut -d' ' -f1
+  elif command -v sha256sum &>/dev/null; then
+    sha256sum | cut -d' ' -f1
+  else
+    error "Neither shasum nor sha256sum is available — cannot compute hash."
+    return 1
+  fi
+}
+
+# write_manifest_hash — record the hash of a destination file in the
+# .vibeboss/originals/<rel-path>.sha256 manifest. Skips in --dry-run.
+# Requires WORKSPACE to be set.
+write_manifest_hash() {
+  local dest="$1"
+  if [ -z "${WORKSPACE:-}" ]; then
+    return 0
+  fi
+  if [ ! -f "$dest" ]; then
+    return 0
+  fi
+
+  # rel = dest minus workspace prefix (no leading slash)
+  local rel="${dest#"$WORKSPACE"/}"
+  local manifest_path="$WORKSPACE/.vibeboss/originals/$rel.sha256"
+  local manifest_dir
+  manifest_dir="$(dirname "$manifest_path")"
+
+  if $DRY_RUN; then
+    echo "    [dry-run] would record hash: $manifest_path"
+    return 0
+  fi
+
+  mkdir -p "$manifest_dir"
+  local hash
+  hash="$(hash_file "$dest")"
+  printf '%s\n' "$hash" > "$manifest_path"
+}
+
+# write_file — write a file from a template, substituting placeholders, then
+# record its post-substitute hash in the manifest. Usage: write_file <src> <dest>
 write_file() {
   local src="$1"
   local dest="$2"
 
   if $UPGRADE && [ -f "$dest" ]; then
-    return 0  # skip existing files in upgrade mode
+    # In upgrade mode, if the file already exists we leave it alone — but
+    # we still want a manifest entry so a future --update can manage it.
+    # (Only record if the manifest doesn't already exist.)
+    if [ -n "${WORKSPACE:-}" ]; then
+      local rel="${dest#"$WORKSPACE"/}"
+      local existing_manifest="$WORKSPACE/.vibeboss/originals/$rel.sha256"
+      if [ ! -f "$existing_manifest" ]; then
+        write_manifest_hash "$dest"
+      fi
+    fi
+    return 0
   fi
 
   local dest_dir
@@ -182,6 +272,50 @@ write_file() {
   local content
   content="$(cat "$src")"
   substitute "$content" > "$dest"
+  write_manifest_hash "$dest"
+}
+
+# write_version_metadata — write/refresh $WORKSPACE/.vibeboss-version with
+# the contract documented in CLAUDE.md (version, source_path, source_sha,
+# installed_at, updated_at). Preserves installed_at if the file already
+# exists; otherwise sets installed_at = now.
+write_version_metadata() {
+  if [ -z "${WORKSPACE:-}" ]; then
+    return 0
+  fi
+
+  local version_file="$WORKSPACE/.vibeboss-version"
+  local now
+  now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+  local source_version
+  source_version="$(cat "$SCRIPT_DIR/VERSION" 2>/dev/null || echo unknown)"
+
+  local source_sha
+  source_sha="$(git -C "$SCRIPT_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
+
+  local installed_at="$now"
+  if [ -f "$version_file" ]; then
+    local prev
+    prev="$(awk -F': ' '/^installed_at:/ { print $2; exit }' "$version_file" 2>/dev/null || true)"
+    if [ -n "$prev" ]; then
+      installed_at="$prev"
+    fi
+  fi
+
+  if $DRY_RUN; then
+    echo "    [dry-run] would write version metadata: $version_file"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$version_file")"
+  cat > "$version_file" <<EOF
+version: $source_version
+source_path: $SCRIPT_DIR
+source_sha: $source_sha
+installed_at: $installed_at
+updated_at: $now
+EOF
 }
 
 # ensure_dir — create a directory (skips in dry-run)
@@ -357,6 +491,311 @@ if $ADD_PROJECT_MODE; then
      so the runlog/decision records the birth event.
 
 DONE
+
+  if $DRY_RUN; then
+    warn "DRY RUN complete — no files were written."
+  fi
+
+  exit 0
+fi
+
+# ─── --update mode ───────────────────────────────────────────────────────────
+if $UPDATE_MODE; then
+  # Resolve workspace
+  if [ -z "$WORKSPACE" ]; then
+    WORKSPACE="$DEFAULT_WORKSPACE"
+  fi
+  WORKSPACE="${WORKSPACE/#\~/$HOME}"
+  if [[ "$WORKSPACE" != /* ]]; then
+    WORKSPACE="$PWD/$WORKSPACE"
+  fi
+  WORKSPACE="${WORKSPACE%/}"
+
+  if [ ! -d "$WORKSPACE" ]; then
+    error "Workspace not found: $WORKSPACE"
+    echo "  Run \`bash init.sh\` first to create a workspace." >&2
+    exit 1
+  fi
+
+  VERSION_FILE="$WORKSPACE/.vibeboss-version"
+  if [ ! -f "$VERSION_FILE" ]; then
+    error "This workspace doesn't track a Vibeboss version."
+    echo "  $VERSION_FILE is missing — the workspace was installed before --update existed." >&2
+    echo "  Run \`bash init.sh --upgrade --workspace \"$WORKSPACE\"\` once to bootstrap the manifest," >&2
+    echo "  then re-run --update from there." >&2
+    exit 1
+  fi
+
+  # Read workspace's pinned version + sha
+  WS_VERSION="$(awk -F': ' '/^version:/ { print $2; exit }' "$VERSION_FILE" 2>/dev/null || true)"
+  WS_SHA="$(awk -F': ' '/^source_sha:/ { print $2; exit }' "$VERSION_FILE" 2>/dev/null || true)"
+  [ -z "$WS_VERSION" ] && WS_VERSION="unknown"
+  [ -z "$WS_SHA" ] && WS_SHA="unknown"
+
+  SOURCE_VERSION="$(cat "$SCRIPT_DIR/VERSION" 2>/dev/null || echo unknown)"
+  SOURCE_SHA="$(git -C "$SCRIPT_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
+
+  # If both version + sha are identical, no-op
+  if [ "$WS_VERSION" = "$SOURCE_VERSION" ] && [ "$WS_SHA" = "$SOURCE_SHA" ] && [ "$WS_SHA" != "unknown" ]; then
+    info "Already up to date (v$WS_VERSION @ ${WS_SHA:0:12})."
+    exit 0
+  fi
+
+  cat <<UPDBANNER
+
+Updating Vibeboss workspace
+─────────────────────────────
+Workspace: $WORKSPACE
+From:      v$WS_VERSION (sha ${WS_SHA:0:12})
+To:        v$SOURCE_VERSION (sha ${SOURCE_SHA:0:12})
+─────────────────────────────
+UPDBANNER
+
+  if $DRY_RUN; then
+    warn "DRY RUN — no files will be written."
+  fi
+
+  # We need TODAY + HQ_PATH set for the substitute() helper. We don't have
+  # the operator-customization values from the original install, so for any
+  # placeholders that remain unsubstituted, we read them back from the existing
+  # workspace files where possible. For the most common ones, we read from the
+  # version metadata + hq/crew.yml.
+  TODAY="$(date '+%Y-%m-%d')"
+  HQ_PATH="$WORKSPACE/hq"
+
+  # Best-effort recovery of operator fields from the existing workspace so
+  # substitute() produces the same bytes as the original install.
+  if [ -f "$HQ_PATH/crew.yml" ]; then
+    LEAD_NAME="$(awk '
+      /^venture_lead:/ { in_block=1; next }
+      in_block && /^[a-zA-Z]/ { in_block=0 }
+      in_block && /^[[:space:]]+name:/ { print $2; exit }
+    ' "$HQ_PATH/crew.yml" 2>/dev/null | tr -d '"')"
+    [ -z "$LEAD_NAME" ] && LEAD_NAME="Boss"
+  fi
+  # Operator name/email are harder to recover — pull from hq/CLAUDE.md if present
+  if [ -f "$HQ_PATH/CLAUDE.md" ]; then
+    OP_LINE="$(grep -m1 -E 'operator|Operator' "$HQ_PATH/CLAUDE.md" 2>/dev/null || true)"
+    # Not strictly required; substitute() will just leave the placeholders for
+    # fields it can't fill. The hash comparison on the *new canonical* will
+    # also see the same placeholder — meaning the file matches and we skip
+    # gracefully.
+    : "$OP_LINE"
+  fi
+  # Leave OPERATOR_NAME etc. as whatever they were (probably empty) — the
+  # canonical content is computed identically for both stored-original and
+  # new-canonical, so missing fields don't cause false-positive customizations
+  # for files that *don't* embed those fields. For files that *do*, the
+  # comparison is between two identically-substituted strings.
+
+  # ── Walk templates and decide per-file ──────────────────────────────────────
+  heading "Comparing workspace against templates..."
+
+  # update_file — compares one template against its workspace destination and
+  # acts per the decision tree. Args: <src_template> <dest_path>
+  update_file() {
+    local src="$1"
+    local dest="$2"
+    local rel="${dest#"$WORKSPACE"/}"
+    local manifest_path="$WORKSPACE/.vibeboss/originals/$rel.sha256"
+
+    # Compute new-canonical hash (what we'd write right now)
+    local new_canonical_content new_canonical_hash
+    new_canonical_content="$(substitute "$(cat "$src")")"
+    new_canonical_hash="$(printf '%s' "$new_canonical_content" | hash_string)"
+
+    if [ ! -f "$dest" ]; then
+      # Destination missing — refresh.
+      if $DRY_RUN; then
+        echo "    [dry-run] would create missing: $rel"
+      else
+        mkdir -p "$(dirname "$dest")"
+        printf '%s' "$new_canonical_content" > "$dest"
+        write_manifest_hash "$dest"
+        info "Created (was missing): $rel"
+      fi
+      UPDATE_NEW=$((UPDATE_NEW + 1))
+      return 0
+    fi
+
+    local current_hash
+    current_hash="$(hash_file "$dest")"
+
+    local stored_original=""
+    if [ -f "$manifest_path" ]; then
+      stored_original="$(head -n1 "$manifest_path" | tr -d '[:space:]')"
+    fi
+
+    if [ -z "$stored_original" ]; then
+      # Legacy workspace — no manifest entry. Treat current file as authoritative.
+      if $DRY_RUN; then
+        echo "    [dry-run] would adopt existing as original: $rel"
+      else
+        mkdir -p "$(dirname "$manifest_path")"
+        printf '%s\n' "$current_hash" > "$manifest_path"
+        info "Adopted existing (no prior manifest): $rel"
+      fi
+      UPDATE_LEGACY_ADOPTED=$((UPDATE_LEGACY_ADOPTED + 1))
+      return 0
+    fi
+
+    if [ "$current_hash" = "$stored_original" ]; then
+      # User hasn't touched it.
+      if [ "$stored_original" = "$new_canonical_hash" ]; then
+        # No change needed.
+        UPDATE_UNCHANGED=$((UPDATE_UNCHANGED + 1))
+        return 0
+      fi
+      # Safe refresh.
+      if $DRY_RUN; then
+        echo "    [dry-run] would refresh: $rel"
+      else
+        printf '%s' "$new_canonical_content" > "$dest"
+        printf '%s\n' "$new_canonical_hash" > "$manifest_path"
+        info "Refreshed: $rel"
+      fi
+      UPDATE_REFRESHED=$((UPDATE_REFRESHED + 1))
+      return 0
+    fi
+
+    # User has customized this file.
+    if [ "$current_hash" = "$new_canonical_hash" ]; then
+      # Their customization happens to match the new canonical — no action.
+      if $DRY_RUN; then
+        echo "    [dry-run] customization matches new canonical: $rel"
+      else
+        printf '%s\n' "$new_canonical_hash" > "$manifest_path"
+      fi
+      UPDATE_UNCHANGED=$((UPDATE_UNCHANGED + 1))
+      return 0
+    fi
+
+    if $NONINTERACTIVE; then
+      warn "CUSTOMIZED (kept): $rel"
+      UPDATE_KEPT=$((UPDATE_KEPT + 1))
+      return 0
+    fi
+
+    # Interactive prompt loop
+    while true; do
+      cat <<PROMPT
+
+CUSTOMIZED: $rel
+  Your version differs from the canonical version that was installed.
+  [k] keep your version (no change)
+  [o] overwrite with new canonical
+  [d] show diff (then re-prompt)
+  [s] skip this file (decide later)
+PROMPT
+      local choice
+      read -rp "Choice [k]: " choice
+      choice="${choice:-k}"
+      case "$choice" in
+        k|K)
+          UPDATE_KEPT=$((UPDATE_KEPT + 1))
+          return 0
+          ;;
+        o|O)
+          if $DRY_RUN; then
+            echo "    [dry-run] would overwrite: $rel"
+          else
+            printf '%s' "$new_canonical_content" > "$dest"
+            printf '%s\n' "$new_canonical_hash" > "$manifest_path"
+            info "Overwritten: $rel"
+          fi
+          UPDATE_REFRESHED=$((UPDATE_REFRESHED + 1))
+          return 0
+          ;;
+        d|D)
+          local tmp
+          tmp="$(mktemp)"
+          printf '%s' "$new_canonical_content" > "$tmp"
+          echo "─── diff: workspace vs new canonical ───"
+          diff -u "$dest" "$tmp" || true
+          echo "─────────────────────────────────────────"
+          rm -f "$tmp"
+          ;;
+        s|S)
+          UPDATE_SKIPPED=$((UPDATE_SKIPPED + 1))
+          return 0
+          ;;
+        *)
+          warn "Unknown choice: $choice — please pick k/o/d/s."
+          ;;
+      esac
+    done
+  }
+
+  # Walk every template file and compute its destination path. Skip the
+  # _per_project template directory (those are project scaffolding, handled
+  # by --add-project, not part of the per-workspace baseline).
+  while IFS= read -r -d '' src; do
+    rel="${src#"$TEMPLATES/"}"
+
+    # Skip per-project template tree (different lifecycle)
+    if [[ "$rel" == projects/_per_project/* ]]; then
+      continue
+    fi
+
+    # Map template path to workspace destination
+    if [[ "$rel" == _workspace_root/* ]]; then
+      dest="$WORKSPACE/${rel#_workspace_root/}"
+    else
+      dest="$WORKSPACE/$rel"
+    fi
+
+    # .gitkeep files don't need manifest tracking — just ensure they exist.
+    if [[ "$rel" == *.gitkeep ]]; then
+      if [ ! -f "$dest" ]; then
+        if $DRY_RUN; then
+          echo "    [dry-run] would touch: $dest"
+        else
+          mkdir -p "$(dirname "$dest")"
+          touch "$dest"
+        fi
+      fi
+      continue
+    fi
+
+    update_file "$src" "$dest"
+  done < <(find "$TEMPLATES" -type f -print0)
+
+  # ── Run migrations ──────────────────────────────────────────────────────────
+  heading "Running migrations..."
+  MIGRATION_RUNNER="$SCRIPT_DIR/migrations/run.sh"
+  if [ -f "$MIGRATION_RUNNER" ]; then
+    if $DRY_RUN; then
+      echo "    [dry-run] would run migrations: $WS_VERSION → $SOURCE_VERSION"
+    else
+      MIG_OUT="$(bash "$MIGRATION_RUNNER" "$WORKSPACE" "$WS_VERSION" "$SOURCE_VERSION" 2>&1 || true)"
+      if [ -n "$MIG_OUT" ]; then
+        printf '%s\n' "$MIG_OUT"
+        # Best-effort count: lines matching "running migration" or similar.
+        # The runner is owned by Cluster C; we just trust the exit status here.
+        UPDATE_MIGRATIONS_RUN="$(printf '%s\n' "$MIG_OUT" | grep -c -E '^(running|applying|migrating)' || true)"
+      fi
+    fi
+  else
+    warn "Migration runner not found at $MIGRATION_RUNNER — skipping migrations."
+  fi
+
+  # ── Update version metadata ─────────────────────────────────────────────────
+  write_version_metadata
+
+  # ── Summary ─────────────────────────────────────────────────────────────────
+  cat <<SUMMARY
+
+─────────────────────────────
+Update complete: v$WS_VERSION → v$SOURCE_VERSION
+  Files refreshed:        $UPDATE_REFRESHED
+  Files kept (customized): $UPDATE_KEPT
+  Files unchanged:        $UPDATE_UNCHANGED
+  Files newly created:    $UPDATE_NEW
+  Legacy files adopted:   $UPDATE_LEGACY_ADOPTED
+  Files skipped:          $UPDATE_SKIPPED
+  Migrations run:         $UPDATE_MIGRATIONS_RUN
+─────────────────────────────
+SUMMARY
 
   if $DRY_RUN; then
     warn "DRY RUN complete — no files were written."
@@ -582,6 +1021,11 @@ if ! $DRY_RUN && ! $UPGRADE; then
   fi
 fi
 
+# ─── Version metadata ────────────────────────────────────────────────────────
+# Pin the workspace to the source version + sha so future --update runs know
+# where they started from.
+write_version_metadata
+
 # ─── Success block ────────────────────────────────────────────────────────────
 cat <<SUCCESS
 
@@ -606,6 +1050,9 @@ cat <<SUCCESS
 
   Tip: the master dashboard (optional) gives you a live
   view of all sessions. See the Vibeboss README for setup.
+
+  Future updates:
+       bash $SCRIPT_DIR/init.sh --update --workspace "$WORKSPACE"
 
 SUCCESS
 

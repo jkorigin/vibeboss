@@ -195,6 +195,71 @@ elif ! printf '%s' "$RESUME_OUT" | grep -q "online"; then
   fail "boot.sh did not return to normal brief after STOP removed"
 fi
 
+# ─── Update mechanism: .vibeboss-version + manifest + --update + banner ──────
+echo "Testing update mechanism..."
+
+check_file "$TMPWS/.vibeboss-version"
+
+if ! grep -q "^version: " "$TMPWS/.vibeboss-version" 2>/dev/null; then
+  fail ".vibeboss-version missing 'version:' line"
+fi
+if ! grep -q "^source_path: " "$TMPWS/.vibeboss-version" 2>/dev/null; then
+  fail ".vibeboss-version missing 'source_path:' line"
+fi
+if ! grep -q "^installed_at: " "$TMPWS/.vibeboss-version" 2>/dev/null; then
+  fail ".vibeboss-version missing 'installed_at:' line"
+fi
+
+# Manifest populated
+MANIFEST_COUNT="$(find "$TMPWS/.vibeboss/originals" -name '*.sha256' 2>/dev/null | wc -l | tr -d ' ')"
+if [ "$MANIFEST_COUNT" -lt 10 ]; then
+  fail ".vibeboss/originals/ manifest has only $MANIFEST_COUNT entries (expected >= 10)"
+fi
+
+# Banner should NOT appear when versions match (just installed; identical)
+set +e
+NOBANNER_OUT="$("$TMPWS/hq/.claude/hooks/boot.sh" --brief-only 2>/dev/null)"
+set -e
+if printf '%s' "$NOBANNER_OUT" | grep -q "Vibeboss update available"; then
+  fail "boot.sh emitted update banner when versions match"
+fi
+
+# Simulate stale workspace — bump version backwards
+sed -i.bak 's/^version: .*/version: 0.0.1-stale/' "$TMPWS/.vibeboss-version"
+rm -f "$TMPWS/.vibeboss-version.bak"
+
+# Banner SHOULD appear now
+set +e
+BANNER_OUT="$("$TMPWS/hq/.claude/hooks/boot.sh" --brief-only 2>/dev/null)"
+set -e
+if ! printf '%s' "$BANNER_OUT" | grep -q "Vibeboss update available"; then
+  fail "boot.sh did not emit update banner when version is stale"
+fi
+
+# --update should apply and clear the staleness
+set +e
+bash "$REPO_DIR/init.sh" --update --workspace "$TMPWS" --noninteractive >/dev/null 2>&1
+UPDATE_STATUS=$?
+set -e
+if [ "$UPDATE_STATUS" -ne 0 ]; then
+  fail "init.sh --update exited with status $UPDATE_STATUS"
+fi
+
+# Version should now match source
+SOURCE_VERSION="$(cat "$REPO_DIR/VERSION" 2>/dev/null | tr -d '[:space:]')"
+WS_VERSION_AFTER="$(grep '^version: ' "$TMPWS/.vibeboss-version" | sed 's/^version: //' | tr -d '[:space:]')"
+if [ "$SOURCE_VERSION" != "$WS_VERSION_AFTER" ]; then
+  fail "after --update, workspace version ($WS_VERSION_AFTER) != source ($SOURCE_VERSION)"
+fi
+
+# Banner should be gone now
+set +e
+POSTUPDATE_OUT="$("$TMPWS/hq/.claude/hooks/boot.sh" --brief-only 2>/dev/null)"
+set -e
+if printf '%s' "$POSTUPDATE_OUT" | grep -q "Vibeboss update available"; then
+  fail "boot.sh still emits update banner after successful --update"
+fi
+
 # ─── Report ──────────────────────────────────────────────────────────────────
 if [ "${#FAILURES[@]}" -gt 0 ]; then
   echo ""
