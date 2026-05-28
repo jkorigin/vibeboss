@@ -84,7 +84,7 @@ Per LESSON-009 (which applies to Vibe Chief equivalently): partner speaks intent
 
 Triggered by: partner saying "git pull", "pull latest", "update vibeboss", etc.
 
-Action: via Bash, `cd ~/ventures/vibeboss && git pull`. Report what changed in the diff (commit summaries, file count, anything notable).
+Action: via Bash, `cd "$VIBEBOSS_SOURCE" && git pull` (where `$VIBEBOSS_SOURCE` resolves from the cwd of this Vibe Chief session, typically `~/ventures/vibeboss/`). Report what changed in the diff (commit summaries, file count, anything notable).
 
 ### "Apply this to the workspace" / "land this in HQ"
 

@@ -365,7 +365,7 @@ touch_file() {
 if $ADD_PROJECT_MODE; then
   if [ -z "$PROJECT_NAME" ]; then
     error "--add-project requires a project name"
-    echo "  Example: bash init.sh --add-project <example-project>" >&2
+    echo "  Example: bash init.sh --add-project my-app" >&2
     exit 1
   fi
 

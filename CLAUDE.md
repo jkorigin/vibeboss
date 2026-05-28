@@ -41,7 +41,7 @@ See [`CHIEF.md`](CHIEF.md) for Vibe Chief's full boot brief and discipline.
 8. **Inbox protocol** — operator drop-zone with `requests/`, `chats/`, `todos/`, `processed/` subfolders. On every boot the agent surfaces new items.
 9. **Brand discipline** — internal docs may be technical; anything destined for the public release is non-business-internal and uses product-native vocabulary.
 10. **Dev-workflow skill** — `hq/skills/dev-workflow/SKILL.md` codifies the standard build loop (research → build → test → ≥3 bug-fix → fresh-agent review → ≥3 tighten → human gate). Hard-gates on the round counts.
-11. **Labs as continuous research function** — `vibeboss-workspace/labs/` mirrors project structure (`research/<example-project>/`, `research/master-dashboard/`, `research/hq/`). Research lead (Ginger) hands findings back to project build leads via their inboxes for adoption.
+11. **Labs as continuous research function** — `vibeboss-workspace/labs/` mirrors project structure (`research/<project-name>/` per active project plus an `hq/` track for framework-level research). Research lead (Ginger by template default) hands findings back to project build leads via their inboxes for adoption.
 
 ## Repository layout
 

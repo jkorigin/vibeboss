@@ -4,7 +4,7 @@
 
 **Goal:** Migrate Vibeboss's runtime state out of `~/ventures/vibeboss/` (the future OSS repo) into `~/ventures/vibeboss-workspace/{hq,labs,projects/}`, leaving `vibeboss/` as a pure framework-source folder.
 
-**Architecture:** Pure filesystem migration — no code generation. Move `office/` and `research/` and `crew.yml` and `vibeboss-workspace/projects/<example-project>/` to new homes. Rewrite the two CLAUDE.md files (framework-reference vs boot-brief). Sweep all internal absolute-path references. Restart the running WhatsApp PA daemon from its new home and verify it still works end-to-end.
+**Architecture:** Pure filesystem migration — no code generation. Move `office/` and `research/` and `crew.yml` and `vibeboss-workspace/projects/<project-name>/` to new homes. Rewrite the two CLAUDE.md files (framework-reference vs boot-brief). Sweep all internal absolute-path references. Restart the running WhatsApp PA daemon from its new home and verify it still works end-to-end.
 
 **Tech Stack:** Bash for moves, sed/grep for sweeps, Bun for restarting the daemon, curl for verifying the dashboard API.
 
@@ -12,7 +12,7 @@
 - Spec: [`docs/superpowers/specs/2026-05-26-topology-hq-split-design.md`](../specs/2026-05-26-topology-hq-split-design.md)
 - Live daemon at port 3000, PID stored at `/tmp/wapa-direct.pid`, currently connected to WhatsApp as `<whatsapp-id>@c.us`
 - No git repo on either side — rollback is via filesystem snapshot, not `git revert`
-- `vibeboss-workspace/projects/` currently contains only `<example-project>/` and will be removed entirely
+- `vibeboss-workspace/projects/` currently contains only `<project-name>/` and will be removed entirely
 
 ---
 
@@ -42,7 +42,7 @@ if [ -f /tmp/wapa-direct.pid ]; then
   kill $(cat /tmp/wapa-direct.pid) 2>/dev/null
 fi
 lsof -ti :3000 2>/dev/null | xargs -r kill 2>&1
-pkill -f "<example-project>/data" 2>/dev/null
+pkill -f "<project-name>/data" 2>/dev/null
 sleep 2
 echo "port 3000 free?"; lsof -nP -iTCP:3000 -sTCP:LISTEN 2>&1 | head -3
 ```
@@ -68,7 +68,7 @@ Expected: a record of the pre-migration tree shape for inclusion in the runlog e
 ## Task 1: Create the new directory tree
 
 **Files:**
-- Create: `~/ventures/vibeboss-workspace/hq/{runlog,decisions,inbox,skills,follow-ups,secrets,projects/<example-project>/decisions}`
+- Create: `~/ventures/vibeboss-workspace/hq/{runlog,decisions,inbox,skills,follow-ups,secrets,projects/<project-name>/decisions}`
 - Create: `~/ventures/vibeboss-workspace/labs/research`
 - Create: `~/ventures/vibeboss-workspace/projects`
 
@@ -86,7 +86,7 @@ mkdir -p \
   ~/ventures/vibeboss-workspace/hq/skills \
   ~/ventures/vibeboss-workspace/hq/follow-ups \
   ~/ventures/vibeboss-workspace/hq/secrets \
-  ~/ventures/vibeboss-workspace/hq/projects/<example-project>/decisions \
+  ~/ventures/vibeboss-workspace/hq/projects/<project-name>/decisions \
   ~/ventures/vibeboss-workspace/labs/research \
   ~/ventures/vibeboss-workspace/projects
 echo "tree created:"
@@ -104,8 +104,8 @@ Expected output (16 directories):
 ~/ventures/vibeboss-workspace/hq/inbox/requests
 ~/ventures/vibeboss-workspace/hq/inbox/todos
 ~/ventures/vibeboss-workspace/hq/projects
-~/ventures/vibeboss-workspace/hq/projects/<example-project>
-~/ventures/vibeboss-workspace/hq/projects/<example-project>/decisions
+~/ventures/vibeboss-workspace/hq/projects/<project-name>
+~/ventures/vibeboss-workspace/hq/projects/<project-name>/decisions
 ~/ventures/vibeboss-workspace/hq/runlog
 ~/ventures/vibeboss-workspace/hq/secrets
 ~/ventures/vibeboss-workspace/hq/skills
@@ -119,19 +119,19 @@ Expected output (16 directories):
 ## Task 2: Move the WhatsApp PA project code
 
 **Files:**
-- Move: `~/ventures/vibeboss-workspace/projects/<example-project>` → `~/ventures/vibeboss-workspace/projects/<example-project>`
+- Move: `~/ventures/vibeboss-workspace/projects/<project-name>` → `~/ventures/vibeboss-workspace/projects/<project-name>`
 - Remove: `~/ventures/vibeboss-workspace/projects/` (parent, now empty)
 
 - [ ] **Step 2.1: Move the project directory wholesale**
 
 Run:
 ```bash
-mv ~/ventures/vibeboss-workspace/projects/<example-project> ~/ventures/vibeboss-workspace/projects/<example-project>
+mv ~/ventures/vibeboss-workspace/projects/<project-name> ~/ventures/vibeboss-workspace/projects/<project-name>
 ls ~/ventures/vibeboss-workspace/projects/
 echo "---"
-ls ~/ventures/vibeboss-workspace/projects/<example-project>/ | head -15
+ls ~/ventures/vibeboss-workspace/projects/<project-name>/ | head -15
 ```
-Expected: `<example-project>` appears under `projects/`; its contents include `package.json`, `src/`, `public/`, `node_modules/`, `data/`, etc.
+Expected: `<project-name>` appears under `projects/`; its contents include `package.json`, `src/`, `public/`, `node_modules/`, `data/`, etc.
 
 - [ ] **Step 2.2: Remove the now-empty `vibeboss-workspace/projects/` parent**
 
@@ -322,7 +322,7 @@ You may read/write inside these directories. Outside these is read-only at best,
 |---|---|
 | `~/ventures/vibeboss-workspace/hq/` | This HQ — your home. |
 | `~/ventures/vibeboss-workspace/labs/` | Research-labs project workspace. |
-| `~/ventures/vibeboss-workspace/projects/<example-project>/` | Partner's personal WhatsApp PA. |
+| `~/ventures/vibeboss-workspace/projects/<project-name>/` | Partner's personal WhatsApp PA. |
 | `~/ventures/vibeboss/` | Framework source. Edit only when explicitly working on the OSS-bound product. |
 
 When a new partner-owned project is authorized, add a row here and write a decision file.
@@ -488,7 +488,7 @@ grep -rln "vibeboss-workspace/labs/research" \
   --include="*.md" --include="*.json" --include="*.yml" --include="*.js" \
   2>/dev/null | grep -v node_modules | grep -v "/data/" | head -50
 ```
-Expected: a list of files (mostly under `hq/runlog/`, `hq/decisions/`, the new spec/plan files, and possibly some inside `projects/<example-project>/`).
+Expected: a list of files (mostly under `hq/runlog/`, `hq/decisions/`, the new spec/plan files, and possibly some inside `projects/<project-name>/`).
 
 - [ ] **Step 7.2: Apply path replacements with `sed`**
 
@@ -496,11 +496,11 @@ For each match family found above, run the corresponding sed transform across al
 
 Run:
 ```bash
-# Most-specific first: vibeboss-workspace/projects/<example-project> → vibeboss-workspace/projects/<example-project>
+# Most-specific first: vibeboss-workspace/projects/<project-name> → vibeboss-workspace/projects/<project-name>
 find ~/ventures/vibeboss ~/ventures/vibeboss-workspace \
   \( -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.js" \) \
   -not -path "*/node_modules/*" -not -path "*/data/*" \
-  -exec sed -i '' 's|vibeboss-workspace/projects/<example-project>|vibeboss-workspace/projects/<example-project>|g' {} +
+  -exec sed -i '' 's|vibeboss-workspace/projects/<project-name>|vibeboss-workspace/projects/<project-name>|g' {} +
 
 # vibeboss/office/X → vibeboss-workspace/hq/X (specific subdirs)
 find ~/ventures/vibeboss ~/ventures/vibeboss-workspace \
@@ -549,26 +549,26 @@ If anything else matches, inspect each match and decide: fix manually or leave (
 
 ---
 
-## Task 8: Bootstrap per-project memory subdir for <example-project>
+## Task 8: Bootstrap per-project memory subdir for <project-name>
 
 **Files:**
-- Create: `~/ventures/vibeboss-workspace/hq/projects/<example-project>/STATE.md`
-- Create: `~/ventures/vibeboss-workspace/hq/projects/<example-project>/notes.md`
-- Create: `~/ventures/vibeboss-workspace/hq/projects/<example-project>/lessons.md`
+- Create: `~/ventures/vibeboss-workspace/hq/projects/<project-name>/STATE.md`
+- Create: `~/ventures/vibeboss-workspace/hq/projects/<project-name>/notes.md`
+- Create: `~/ventures/vibeboss-workspace/hq/projects/<project-name>/lessons.md`
 
 - [ ] **Step 8.1: Write the <example-project> project-specific STATE.md**
 
-Write to `~/ventures/vibeboss-workspace/hq/projects/<example-project>/STATE.md`:
+Write to `~/ventures/vibeboss-workspace/hq/projects/<project-name>/STATE.md`:
 
 ```markdown
-# <example-project> — project STATE
+# <project-name> — project STATE
 
 **Last updated:** 2026-05-26
 **Status:** v1.0.2 — live, connected, allowlisted-and-sending
 
 ## Snapshot
 
-- Daemon location: `~/ventures/vibeboss-workspace/projects/<example-project>/`
+- Daemon location: `~/ventures/vibeboss-workspace/projects/<project-name>/`
 - WhatsApp account: `<whatsapp-id>@c.us`
 - Dashboard: http://localhost:3000 (Bun.serve, WebSocket live log)
 - Model: Sonnet 4.6 (`claude-sonnet-4-6`), budget cap $0.15/reply
@@ -604,26 +604,26 @@ Write to `~/ventures/vibeboss-workspace/hq/projects/<example-project>/STATE.md`:
 
 Run:
 ```bash
-ls -la ~/ventures/vibeboss-workspace/hq/projects/<example-project>/STATE.md
+ls -la ~/ventures/vibeboss-workspace/hq/projects/<project-name>/STATE.md
 ```
 Expected: file exists.
 
 - [ ] **Step 8.2: Write stub notes.md and lessons.md for the project**
 
-Write to `~/ventures/vibeboss-workspace/hq/projects/<example-project>/notes.md`:
+Write to `~/ventures/vibeboss-workspace/hq/projects/<project-name>/notes.md`:
 
 ```markdown
-# <example-project> — running notes
+# <project-name> — running notes
 
 Project-specific running notes. Edit freely. Things that don't rise to LESSON or decision level but worth remembering.
 
 - (empty for now)
 ```
 
-Write to `~/ventures/vibeboss-workspace/hq/projects/<example-project>/lessons.md`:
+Write to `~/ventures/vibeboss-workspace/hq/projects/<project-name>/lessons.md`:
 
 ```markdown
-# <example-project> — project LESSONS
+# <project-name> — project LESSONS
 
 Project-specific structural rules. Re-read before any non-trivial change to this project. Format mirrors `hq/lessons.md` (LESSON-NNN, Rule, Why, How to apply).
 
@@ -640,7 +640,7 @@ Project-specific structural rules. Re-read before any non-trivial change to this
 
 Run:
 ```bash
-ls -la ~/ventures/vibeboss-workspace/hq/projects/<example-project>/
+ls -la ~/ventures/vibeboss-workspace/hq/projects/<project-name>/
 ```
 Expected: 3 files (STATE.md, notes.md, lessons.md) + 1 dir (decisions/) — total ~4 entries.
 
@@ -688,13 +688,13 @@ Executed the migration per [docs/superpowers/plans/2026-05-26-topology-hq-split.
 
 1. Snapshot taken at `/tmp/vibeboss-snapshot-2026-05-26/`; daemon stopped.
 2. New tree created at `~/ventures/vibeboss-workspace/{hq, labs, projects}/...`
-3. `<example-project>/` moved from `~/ventures/vibeboss-workspace/projects/` into `~/ventures/vibeboss-workspace/projects/`. Old parent `vibeboss-workspace/projects/` removed.
+3. `<project-name>/` moved from `~/ventures/vibeboss-workspace/projects/` into `~/ventures/vibeboss-workspace/projects/`. Old parent `vibeboss-workspace/projects/` removed.
 4. All `office/` contents moved into `hq/` with appropriate restructuring (STATE, runlog/*, decisions/*, inbox/processed/*, lessons.md, secrets/). `office/` itself removed.
 5. `research/` contents moved into `labs/research/`. Old `research/` removed.
 6. New HQ boot-brief CLAUDE.md written.
 7. Framework `vibeboss/CLAUDE.md` rewritten as the OSS reference doc (removed all boot-sequence and per-installation content).
 8. Path sweep applied via `sed` across all `*.md`/`*.json`/`*.yml`/`*.js` outside `node_modules` and `data/`. Re-inventory came back clean.
-9. Per-project memory subdir bootstrapped for <example-project> with project STATE/notes/lessons.
+9. Per-project memory subdir bootstrapped for <project-name> with project STATE/notes/lessons.
 10. Master STATE.md updated and this runlog entry written.
 
 Daemon restarted from new path; verified WhatsApp connection re-established via stored auth, dashboard accessible at http://localhost:3000, log pane shows live events.
@@ -704,8 +704,8 @@ Daemon restarted from new path; verified WhatsApp connection re-established via 
 (Full command sequence is in the migration plan at `vibeboss/docs/superpowers/plans/2026-05-26-topology-hq-split.md`. Highlight commands:)
 
 ```
-mkdir -p ~/ventures/vibeboss-workspace/{hq/{runlog,decisions,inbox,skills,follow-ups,secrets,projects/<example-project>/decisions},labs/research,projects}
-mv ~/ventures/vibeboss-workspace/projects/<example-project>  ~/ventures/vibeboss-workspace/projects/<example-project>
+mkdir -p ~/ventures/vibeboss-workspace/{hq/{runlog,decisions,inbox,skills,follow-ups,secrets,projects/<project-name>/decisions},labs/research,projects}
+mv ~/ventures/vibeboss-workspace/projects/<project-name>  ~/ventures/vibeboss-workspace/projects/<project-name>
 rmdir ~/ventures/vibeboss-workspace/projects
 mv ~/ventures/vibeboss-workspace/hq/STATE.md  ~/ventures/vibeboss-workspace/hq/STATE.md
 mv ~/ventures/vibeboss-workspace/hq/runlog/*.md  ~/ventures/vibeboss-workspace/hq/runlog/
@@ -723,16 +723,16 @@ mv ~/ventures/vibeboss-workspace/labs/research/*.md  ~/ventures/vibeboss-workspa
 
 - Created: ~/ventures/vibeboss-workspace/ (entire tree)
 - Created: ~/ventures/vibeboss-workspace/hq/CLAUDE.md (boot brief, fresh)
-- Created: ~/ventures/vibeboss-workspace/hq/projects/<example-project>/{STATE.md, notes.md, lessons.md}
+- Created: ~/ventures/vibeboss-workspace/hq/projects/<project-name>/{STATE.md, notes.md, lessons.md}
 - Modified: ~/ventures/vibeboss/CLAUDE.md (full rewrite, framework reference)
 - Modified: ~/ventures/vibeboss-workspace/hq/STATE.md (paths + new closed entry + new Next item)
-- Moved: ~80 files from vibeboss/office/, vibeboss-workspace/labs/research/, vibeboss-workspace/projects/<example-project>/ to new locations
+- Moved: ~80 files from vibeboss/office/, vibeboss-workspace/labs/research/, vibeboss-workspace/projects/<project-name>/ to new locations
 - Removed: vibeboss/office/, vibeboss-workspace/labs/research/, vibeboss-workspace/projects/
 
 ## State at end
 
 - Source tree (`~/ventures/vibeboss/`) is OSS-pure: README, LICENSE, NOTICE, CLAUDE.md, AGENTS.md symlink, crew.yml.template, docs/, .gitignore. No runtime state.
-- Runtime tree (`~/ventures/vibeboss-workspace/`) holds: hq/ (16 dirs + boot brief + STATE + lessons + master crew.yml), labs/ (with research/), projects/ (with <example-project>/).
+- Runtime tree (`~/ventures/vibeboss-workspace/`) holds: hq/ (16 dirs + boot brief + STATE + lessons + master crew.yml), labs/ (with research/), projects/ (with <project-name>/).
 - WhatsApp PA daemon running from new path. Dashboard live. WA connection healthy (stored auth survived the move).
 - All path sweeps cleaned; new and old grep inventories show zero stale references.
 - Subsystem A complete. Subsystems B–G still pending in the A→G order.
@@ -755,14 +755,14 @@ Expected: file exists.
 ## Task 10: Restart the WhatsApp PA daemon from its new path and verify
 
 **Files:**
-- Run: `~/ventures/vibeboss-workspace/projects/<example-project>/src/index.js` (via bun)
+- Run: `~/ventures/vibeboss-workspace/projects/<project-name>/src/index.js` (via bun)
 - Verify: http://localhost:3000/api/state
 
 - [ ] **Step 10.1: Restart daemon from new location**
 
 Run:
 ```bash
-cd ~/ventures/vibeboss-workspace/projects/<example-project> && nohup bun start > /tmp/wapa-direct.log 2>&1 &
+cd ~/ventures/vibeboss-workspace/projects/<project-name> && nohup bun start > /tmp/wapa-direct.log 2>&1 &
 echo $! > /tmp/wapa-direct.pid
 disown
 echo "PID: $(cat /tmp/wapa-direct.pid)"
@@ -781,7 +781,7 @@ Expected: within 30-60s, output shows `connected: True | me: <whatsapp-id>@c.us 
 
 If it doesn't reconnect:
 - Check `tail -30 /tmp/wapa-direct.log` for errors
-- Check that `data/auth/` survived the move (`ls ~/ventures/vibeboss-workspace/projects/<example-project>/data/`)
+- Check that `data/auth/` survived the move (`ls ~/ventures/vibeboss-workspace/projects/<project-name>/data/`)
 - If auth is broken, partner will need to re-scan QR (acceptable but worth flagging)
 
 - [ ] **Step 10.3: Smoke-test dashboard**
@@ -874,7 +874,7 @@ The migration is complete when:
 
 - [ ] All 11 tasks above are checked off.
 - [ ] All 8 validation gates in Task 11.1 pass.
-- [ ] Daemon at `~/ventures/vibeboss-workspace/projects/<example-project>/` is connected to WhatsApp and dashboard responds at port 3000.
+- [ ] Daemon at `~/ventures/vibeboss-workspace/projects/<project-name>/` is connected to WhatsApp and dashboard responds at port 3000.
 - [ ] Partner has tested booting a fresh Claude Code session from `~/ventures/vibeboss-workspace/hq/` and the boot brief loads correctly.
 - [ ] No stale references to old paths remain (per Task 7.3 grep).
 - [ ] Migration runlog entry at `hq/runlog/2026-05-26-topology-migration.md` exists and is accurate.

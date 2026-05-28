@@ -237,9 +237,9 @@ Status logic:
 
 - [x] `crew.yml` updated with `naming_convention:` + `agents:` section (Banana, Carrot, Ginger)
 - [x] `crew.yml.template` in framework source reflects the schema with placeholders
-- [x] `hq/projects/<example-project>/inbox/{requests,chats,todos,processed}/` exist with READMEs
+- [x] `hq/projects/<project-name>/inbox/{requests,chats,todos,processed}/` exist with READMEs
 - [x] `hq/projects/master-dashboard/inbox/{requests,chats,todos,processed}/` exist with READMEs
-- [x] `hq/projects/<example-project>/CLAUDE.md` created (Banana boot protocol)
+- [x] `hq/projects/<project-name>/CLAUDE.md` created (Banana boot protocol)
 - [x] `hq/projects/master-dashboard/CLAUDE.md` created (Carrot boot protocol)
 - [x] `hq/CLAUDE.md` has a "Crew" section explaining the dispatch mechanisms
 - [x] `hq/CLAUDE.md` boot sequence updated to include crew load step

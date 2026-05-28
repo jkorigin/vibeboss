@@ -29,7 +29,7 @@ The fix is a sibling-directory layout under `~/ventures/`, with the runtime conc
   ├── hq/                                   ← My home. Where I boot. Where memory lives.
   ├── labs/                                 ← Research-labs project code + experiments.
   └── projects/                             ← Parent of all partner-owned project codebases.
-      └── <project-name>/                   ← One subdir per partner-owned project (illustrative example used during this migration: <example-project>).
+      └── <project-name>/                   ← One subdir per partner-owned project (illustrative example used during this migration: <project-name>).
 ```
 
 **Hard rules**
@@ -55,7 +55,7 @@ The fix is a sibling-directory layout under `~/ventures/`, with the runtime conc
 ├── follow-ups/           ← Cross-project TODOs.
 ├── secrets/              ← Never committed. Reference-by-path discipline.
 └── projects/             ← Per-project memory routing.
-    ├── <project-name>/   ← (illustrative example used during this design: <example-project>)
+    ├── <project-name>/   ← (illustrative example used during this design: <project-name>)
     │   ├── STATE.md      ← Project-specific state.
     │   ├── notes.md      ← Running notes for this project.
     │   ├── lessons.md    ← Project-specific lessons.
@@ -107,9 +107,9 @@ What `vibeboss/CLAUDE.md` becomes: a doc that explains the *patterns* (HQ, runlo
 
 ## Migration steps (one-time)
 
-1. `mkdir -p ~/ventures/vibeboss-workspace/{hq/{runlog,decisions,inbox,skills,follow-ups,secrets,projects/<example-project>/decisions},labs/research,projects}`
+1. `mkdir -p ~/ventures/vibeboss-workspace/{hq/{runlog,decisions,inbox,skills,follow-ups,secrets,projects/<project-name>/decisions},labs/research,projects}`
 2. Move project code:
-   `mv ~/ventures/vibeboss-workspace/projects/<example-project>  ~/ventures/vibeboss-workspace/projects/<example-project>`
+   `mv ~/ventures/vibeboss-workspace/projects/<project-name>  ~/ventures/vibeboss-workspace/projects/<project-name>`
    `rmdir ~/ventures/vibeboss-workspace/projects` (now empty)
 3. Move HQ runtime:
    - `mv ~/ventures/vibeboss-workspace/hq/STATE.md  ~/ventures/vibeboss-workspace/hq/STATE.md`
@@ -125,13 +125,13 @@ What `vibeboss/CLAUDE.md` becomes: a doc that explains the *patterns* (HQ, runlo
 5. Write fresh `~/ventures/vibeboss-workspace/hq/CLAUDE.md` (boot brief — references framework docs for patterns; routes to STATE/runlog/decisions/inbox in HQ).
 6. Rewrite `~/ventures/vibeboss/CLAUDE.md` as framework reference (no boot sequence, no per-installation specifics, no boundaries section — those are HQ concerns).
 7. Sweep all moved files for absolute path references and update them. Specifically:
-   - All `~/ventures/vibeboss-workspace/projects/<example-project>` → `~/ventures/vibeboss-workspace/projects/<example-project>`
+   - All `~/ventures/vibeboss-workspace/projects/<project-name>` → `~/ventures/vibeboss-workspace/projects/<project-name>`
    - All `vibeboss/office/...` → `vibeboss-workspace/hq/...`
    - All `office/lessons.md` → `hq/lessons.md` (relative or absolute as appropriate)
    - Includes README files, decision files, runlog entries, agent.js comments, launch.json paths.
-8. Bootstrap per-project subdir for <example-project>:
-   - Create `hq/projects/<example-project>/STATE.md` with current WA-PA state copied from cross-cutting STATE.md (anything WA-specific moves here; truly cross-project stays in `hq/STATE.md`).
-   - Create stub `hq/projects/<example-project>/lessons.md`, `notes.md`.
+8. Bootstrap per-project subdir for <project-name>:
+   - Create `hq/projects/<project-name>/STATE.md` with current WA-PA state copied from cross-cutting STATE.md (anything WA-specific moves here; truly cross-project stays in `hq/STATE.md`).
+   - Create stub `hq/projects/<project-name>/lessons.md`, `notes.md`.
 9. Update authorization list in `vibeboss/CLAUDE.md` (the framework doc) → `vibeboss-workspace/hq/CLAUDE.md` (the runtime boot brief) records current authorizations.
 10. Write a migration runlog entry at `hq/runlog/2026-05-26-topology-migration.md` documenting the cutover, with a `Commands run` block listing every `mv`, `rm`, `mkdir`.
 11. Update VS Code / shell shortcut habits: `cd ~/ventures/vibeboss-workspace/hq/` becomes the default boot location. Source visits are `cd ~/ventures/vibeboss/`.
@@ -142,7 +142,7 @@ What `vibeboss/CLAUDE.md` becomes: a doc that explains the *patterns* (HQ, runlo
 - `find ~/ventures/vibeboss -type f | xargs grep -l "office/" 2>/dev/null` returns nothing in framework source.
 - `ls ~/ventures/vibeboss/office 2>&1` returns "No such file" — runtime fully evicted from source.
 - `ls ~/ventures/vibeboss-workspace/hq` shows the expected directory shape.
-- `bun start` from `~/ventures/vibeboss-workspace/projects/<example-project>/` still boots the daemon, scans QR, reaches `connected` state (<example-project> code's relative paths must still resolve after the move).
+- `bun start` from `~/ventures/vibeboss-workspace/projects/<project-name>/` still boots the daemon, scans QR, reaches `connected` state (<project-name> code's relative paths must still resolve after the move).
 - The dashboard at http://localhost:3000 still renders QR / persona / knowledge / log panes correctly.
 - A new Claude Code session at `~/ventures/vibeboss-workspace/hq/` boots and reads the right state.
 
@@ -179,7 +179,7 @@ What `vibeboss/CLAUDE.md` becomes: a doc that explains the *patterns* (HQ, runlo
 | Path references inside moved files are missed by the grep sweep, leaving stale references that mislead future-Boss. | Step 7's sweep must be thorough: scan `**/*.md`, `**/*.json`, `**/*.yml`, `**/*.js` under both `vibeboss/` and `vibeboss-workspace/`. List every match before mutating. |
 | `vibeboss/CLAUDE.md` is doing two jobs (framework reference + boot brief). Splitting it loses context that mattered. | Rewrite both files side-by-side: framework CLAUDE.md = patterns/discipline/license; HQ CLAUDE.md = boot sequence/identity/current authorizations. The boot sequence references the framework doc by relative path. |
 | Partner cd's to old path out of habit and gets confused state. | Clean removal of the old paths during migration (steps 2-3). No stub REDIRECT files — they invite drift. If partner cd's to a removed path, the shell errors loudly, which is the right signal. |
-| The per-project memory routing rule sounds clean but in practice messages are ambiguous ("did this lesson belong to <example-project> or HQ-cross-cutting?"). | Default behavior: I ask when unclear. LESSON-003 already says research-first on ambiguity; this is its application to memory routing. |
+| The per-project memory routing rule sounds clean but in practice messages are ambiguous ("did this lesson belong to <project-name> or HQ-cross-cutting?"). | Default behavior: I ask when unclear. LESSON-003 already says research-first on ambiguity; this is its application to memory routing. |
 
 ---
 
