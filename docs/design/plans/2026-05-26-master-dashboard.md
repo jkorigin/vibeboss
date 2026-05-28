@@ -1,7 +1,7 @@
 # Plan: Vibeboss Master Dashboard (v0.1)
 
 **Date:** 2026-05-26
-**Spec:** `vibeboss/docs/superpowers/specs/2026-05-26-master-dashboard-design.md`
+**Spec:** `vibeboss/docs/design/specs/2026-05-26-master-dashboard-design.md`
 **Deliverable:** `hq/dashboard/` — Bun server on port 3100
 
 ## Build order

@@ -9,7 +9,7 @@
 **Tech Stack:** Bash for moves, sed/grep for sweeps, Bun for restarting the daemon, curl for verifying the dashboard API.
 
 **Pre-flight context:**
-- Spec: [`docs/superpowers/specs/2026-05-26-topology-hq-split-design.md`](../specs/2026-05-26-topology-hq-split-design.md)
+- Spec: [`docs/design/specs/2026-05-26-topology-hq-split-design.md`](../specs/2026-05-26-topology-hq-split-design.md)
 - Live daemon at port 3000, PID stored at `/tmp/wapa-direct.pid`, currently connected to WhatsApp as `<whatsapp-id>@c.us`
 - No git repo on either side — rollback is via filesystem snapshot, not `git revert`
 - `vibeboss-workspace/projects/` currently contains only `<project-name>/` and will be removed entirely
@@ -381,7 +381,7 @@ Inspired by patterns developed in the realm of `~/ventures/<other-project>/`-sty
 
 ## The published primitives
 
-1. **HQ + per-project memory** — separation of cross-cutting memory (lessons, decisions, runlog) from per-project memory (`hq/projects/<name>/`). See [docs/superpowers/specs/2026-05-26-topology-hq-split-design.md](docs/superpowers/specs/2026-05-26-topology-hq-split-design.md) for the canonical design.
+1. **HQ + per-project memory** — separation of cross-cutting memory (lessons, decisions, runlog) from per-project memory (`hq/projects/<name>/`). See [docs/design/specs/2026-05-26-topology-hq-split-design.md](docs/design/specs/2026-05-26-topology-hq-split-design.md) for the canonical design.
 2. **Runlog discipline** — every meaningful work session ends with an append-only runlog entry capturing goal, what-happened, commands, files-touched, state-at-end, next.
 3. **Decisions discipline** — non-trivial choices land as immutable `YYYY-MM-DD-<slug>.md` decision files. Supersession via new files, never overwrite.
 4. **LESSONS as hard-gates** — operator corrections become structural rules re-read at the top of every session. Violation gets logged; repeat violations indicate the rule wording needs revision.
@@ -430,7 +430,7 @@ If you cloned this repo and want to *use* Vibeboss (not just read about it), the
 2. Run the init script (forthcoming in subsystem G) which scaffolds `~/ventures/vibeboss-workspace/{hq,labs,projects}` alongside.
 3. Start a Claude Code session in `~/ventures/vibeboss-workspace/hq/`. The boot brief there does the rest.
 
-Until subsystem G is shipped, init is manual — see [docs/superpowers/specs/2026-05-26-topology-hq-split-design.md](docs/superpowers/specs/2026-05-26-topology-hq-split-design.md) for the layout.
+Until subsystem G is shipped, init is manual — see [docs/design/specs/2026-05-26-topology-hq-split-design.md](docs/design/specs/2026-05-26-topology-hq-split-design.md) for the layout.
 ```
 
 Run:
@@ -684,7 +684,7 @@ Write to `~/ventures/vibeboss-workspace/hq/runlog/2026-05-26-topology-migration.
 
 ## What happened
 
-Executed the migration per [docs/superpowers/plans/2026-05-26-topology-hq-split.md](../../../vibeboss/docs/superpowers/plans/2026-05-26-topology-hq-split.md). 9 tasks in order:
+Executed the migration per [docs/design/plans/2026-05-26-topology-hq-split.md](../../../vibeboss/docs/design/plans/2026-05-26-topology-hq-split.md). 9 tasks in order:
 
 1. Snapshot taken at `/tmp/vibeboss-snapshot-2026-05-26/`; daemon stopped.
 2. New tree created at `~/ventures/vibeboss-workspace/{hq, labs, projects}/...`
@@ -701,7 +701,7 @@ Daemon restarted from new path; verified WhatsApp connection re-established via 
 
 ## Commands run
 
-(Full command sequence is in the migration plan at `vibeboss/docs/superpowers/plans/2026-05-26-topology-hq-split.md`. Highlight commands:)
+(Full command sequence is in the migration plan at `vibeboss/docs/design/plans/2026-05-26-topology-hq-split.md`. Highlight commands:)
 
 ```
 mkdir -p ~/ventures/vibeboss-workspace/{hq/{runlog,decisions,inbox,skills,follow-ups,secrets,projects/<project-name>/decisions},labs/research,projects}

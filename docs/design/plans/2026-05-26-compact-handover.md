@@ -46,8 +46,8 @@ Key decision: **separate `compact-boot.sh`** over extending `boot.sh`. See desig
 - [ ] Write `hq/handovers/README.md`
 
 ### Step 5: Framework docs
-- [ ] Write spec: `vibeboss/docs/superpowers/specs/2026-05-26-compact-handover-design.md`
-- [ ] Write plan: `vibeboss/docs/superpowers/plans/2026-05-26-compact-handover.md` (this file)
+- [ ] Write spec: `vibeboss/docs/design/specs/2026-05-26-compact-handover-design.md`
+- [ ] Write plan: `vibeboss/docs/design/plans/2026-05-26-compact-handover.md` (this file)
 
 ---
 

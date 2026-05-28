@@ -74,15 +74,17 @@ For what's planned but not yet built (autonomous loop, verification tooling, Mai
 
 Vibeboss is a memory + workflow harness; the heavy lifting comes from Claude Code skills.
 
-**Always on (baseline):** every Vibeboss workspace ships with **superpowers** enabled — Jesse Vincent's MIT-licensed collection covering brainstorming, TDD, debugging, parallel-agent dispatch, plans, and code review. Part of Anthropic's official Claude Code marketplace, so it activates automatically on first session. Vibeboss's `dev-workflow` skill explicitly invokes superpowers (`brainstorming`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`) — without it, those steps degrade.
+> **None of these skills are Vibeboss's.** They're third-party plugins from the broader Claude Code ecosystem. Vibeboss recommends them, activates them via plugin manifests, and credits their authors in [NOTICE](NOTICE). We don't fork, vendor, or maintain them — we point you at the canonical upstream. Skill ownership stays with each upstream author.
 
-**Worth adding — curated to three.** Tell Boss what you're building and Boss enables the right ones for the project. You can also name them directly: *"Boss, enable context7 for this project."*
+**Always on (baseline):** every Vibeboss workspace ships with [**superpowers**](https://github.com/obra/superpowers) enabled — Jesse Vincent's MIT-licensed collection covering brainstorming, TDD, debugging, parallel-agent dispatch, plans, and code review. Distributed through [Anthropic's `claude-plugins-official` marketplace](https://github.com/anthropics/claude-plugins-official), so it activates automatically on first session. Vibeboss's `dev-workflow` skill explicitly invokes superpowers (`brainstorming`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`) — without it, those steps degrade.
+
+**Worth adding — curated to three.** All from Anthropic's `claude-plugins-official` marketplace (authored and maintained by Anthropic and contributors, not Vibeboss). Tell Boss what you're building and Boss enables the right ones for the project. You can also name them directly: *"Boss, enable context7 for this project."*
 
 - **context7** — live library documentation lookup. Better than training-data recall for any current API. Useful in nearly every project.
 - **playwright** — browser-based QA. Essential the moment your project touches a web UI.
 - **skill-creator** — supports writing your own skills (the "custom" class of the PPSB architecture). Worth having once you start codifying your own patterns.
 
-**Deliberately not recommended** (in case you wonder why):
+**Deliberately not recommended** (in case you wonder why — all also from `claude-plugins-official`):
 
 - `code-review` / `pr-review-toolkit` — superpowers already includes `requesting-code-review`.
 - `commit-commands` — Claude Code handles git fine without a specialized skill.
@@ -93,9 +95,9 @@ Vibeboss is a memory + workflow harness; the heavy lifting comes from Claude Cod
 
 **External — reference, not a recommendation:**
 
-- **gstack** ([garrytan/gstack](https://github.com/garrytan/gstack)) — Garry Tan's 40+ skill bundle. Comprehensive but heavy: installs machine-wide under `~/.claude/skills/gstack/`, requires Bun, writes to `~/.gstack/`. Worth a look if Vibeboss's curated set feels too thin. Tell Boss *"install gstack"* and Boss will walk you through the upstream install (it's a global install, not a Vibeboss flow).
+- [**gstack**](https://github.com/garrytan/gstack) — Garry Tan's 40+ skill bundle (MIT-licensed). Comprehensive but heavy: installs machine-wide under `~/.claude/skills/gstack/`, requires Bun, writes to `~/.gstack/`. Worth a look if Vibeboss's curated set feels too thin. Tell Boss *"install gstack"* and Boss will walk you through the upstream install (it's a global install, not a Vibeboss flow).
 
-Vibeboss never auto-clones any of these.
+Vibeboss never auto-clones, vendors, or forks any of these. Activation happens through Claude Code's plugin manifest (`enabledPlugins` in `.claude/settings.json`); the actual skill code lives in the marketplace or upstream repo, not in this repository.
 
 ## What this will NOT be
 

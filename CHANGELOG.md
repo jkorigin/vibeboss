@@ -207,7 +207,7 @@ Full self-audit + fix pass. Honest README repositioning, portable `${CLAUDE_PROJ
 - **Blocker 1 — Portable hook paths (initial fix, now superseded).** `vibeboss/.claude/settings.json` was hardcoded to the partner's absolute path. First fix: committed with `VIBEBOSS_DIR_PLACEHOLDER`; `reno.sh` substituted the real path on startup and restored the placeholder on exit (trap-restore). Superseded on 2026-05-27 — see Audit-fix pass below.
 - **Blocker 2 — Workspace-root redirect template.** Added `templates/_workspace_root/.claude/` with `settings.json`, `hooks/redirect.sh`, and `hooks/redirect.md`. `init.sh` now installs it at workspace root on every fresh install. Users who accidentally `cd <workspace>/ && claude` now get a redirect instead of a blank session.
 - **Blocker 3 — Git repository initialized.** `vibeboss/` now has a git repo, v0.1.0 tagged.
-- **Blocker 4 — Partner-specific data audit.** Removed `.claude/launch.json` (hardcoded runtime paths, not OSS canon). Redacted phone number identity from `docs/superpowers/plans/2026-05-26-topology-hq-split.md`. Removed absolute path mention from CHANGELOG. See `decisions/2026-05-26-partner-data-audit.md`.
+- **Blocker 4 — Partner-specific data audit.** Removed `.claude/launch.json` (hardcoded runtime paths, not OSS canon). Redacted phone number identity from `docs/design/plans/2026-05-26-topology-hq-split.md`. Removed absolute path mention from CHANGELOG. See `decisions/2026-05-26-partner-data-audit.md`.
 - **Blocker 5 — Template `crew.yml` clean.** Already correct at time of v0.1.0 ship (`agents: []`, `next_available: Artichoke`). No change needed.
 
 ### Audit-fix pass (2026-05-27)
@@ -238,7 +238,7 @@ Full self-audit identified overclaims in the README, residual partner-specific d
 - **`templates/hq/skills/dev-workflow/SKILL.md`:** softened Phase 3 (bug-fix) and Phase 5 (tighten) "≥3 rounds" hard gates. Three rounds remain the default; explicit carve-out for <50 LOC changes when the preceding round revealed nothing, with the skip logged in the runlog. Realigns dev-workflow with LESSON-002 ("default to build, not improve-the-office"). See `decisions/2026-05-27-dev-workflow-rounds-softening.md`.
 
 **Partner-data scrub (round 2)**
-- The 2026-05-26 partner-data audit missed several spots. The 2026-05-27 grep + scrub touched: `CHANGELOG.md` (`<example-project>` reference + spurious "4 research streams" runtime claim), `CLAUDE.md` (illustrative-marker on `Banana / Carrot / Ginger`), `decisions/2026-05-26-dual-mode-boss-and-vibe-chief.md`, `docs/superpowers/plans/2026-05-26-master-dashboard.md`, `docs/superpowers/specs/2026-05-26-master-dashboard-design.md`, `docs/superpowers/specs/2026-05-26-crew-system-design.md`, `docs/superpowers/plans/2026-05-26-crew-system.md`, `docs/superpowers/specs/2026-05-26-topology-hq-split-design.md`. Identifiers either replaced with placeholders or qualified as illustrative.
+- The 2026-05-26 partner-data audit missed several spots. The 2026-05-27 grep + scrub touched: `CHANGELOG.md` (`<example-project>` reference + spurious "4 research streams" runtime claim), `CLAUDE.md` (illustrative-marker on `Banana / Carrot / Ginger`), `decisions/2026-05-26-dual-mode-boss-and-vibe-chief.md`, `docs/design/plans/2026-05-26-master-dashboard.md`, `docs/design/specs/2026-05-26-master-dashboard-design.md`, `docs/design/specs/2026-05-26-crew-system-design.md`, `docs/design/plans/2026-05-26-crew-system.md`, `docs/design/specs/2026-05-26-topology-hq-split-design.md`. Identifiers either replaced with placeholders or qualified as illustrative.
 
 **Misc**
 - **`VERSION` file added** (`0.2.0-dev`). Both `init.sh` and `reno.sh` now support `--version` / `-v`.
@@ -281,7 +281,7 @@ The 7-subsystem framework arc + Vibe Chief mode shipped. Vibeboss is now install
 
 ### Added
 
-- **Subsystem A — Topology + HQ split.** Source/runtime separation: `vibeboss/` source vs `vibeboss-workspace/{hq, labs, projects/}` runtime. Per-project memory routing under `hq/projects/<name>/`. See [docs/superpowers/specs/2026-05-26-topology-hq-split-design.md](docs/superpowers/specs/2026-05-26-topology-hq-split-design.md).
+- **Subsystem A — Topology + HQ split.** Source/runtime separation: `vibeboss/` source vs `vibeboss-workspace/{hq, labs, projects/}` runtime. Per-project memory routing under `hq/projects/<name>/`. See [docs/design/specs/2026-05-26-topology-hq-split-design.md](docs/design/specs/2026-05-26-topology-hq-split-design.md).
 - **Subsystem B — Dev-workflow skill.** The standard build loop (research → build → test → ≥3 bug-fix → fresh-agent review → ≥3 tighten → human gate) codified as a skill installed at `hq/skills/dev-workflow/SKILL.md`. LESSON-005 wires it into Boss's decision loop.
 - **Subsystem C — Crew system.** Per-project named build leads in `hq/crew.yml`. Inbox dispatch (`hq/projects/<name>/inbox/requests/`) for async; spawn dispatch (`claude --session-id <uuid>`) for sync. Naming theme: produce (vegetables / fruits / herbs).
 - **Subsystem D — Auto-boot.** SessionStart hook at `hq/.claude/settings.json` calls `boot.sh` on every fresh/resumed session and injects the boot brief as `additionalContext`. Partner never types `boot`.

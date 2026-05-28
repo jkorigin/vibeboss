@@ -38,7 +38,7 @@ Every new Vibe Chief session, do:
 3. Read `vibeboss/README.md` (the public one-pager — know what users read first).
 4. List `vibeboss/decisions/` — see what's already been decided. (If the directory doesn't exist yet, create it.)
 5. Read `vibeboss/CHANGELOG.md`.
-6. Read `vibeboss/docs/superpowers/specs/` — every spec is canon-relevant.
+6. Read `vibeboss/docs/design/specs/` — every spec is canon-relevant.
 7. List `vibeboss/templates/hq/` and `vibeboss/templates/labs/` — these are what installs.
 8. Check `vibeboss/.claude/settings.json`, `vibeboss/.codex/hooks.json`, and their hook scripts.
 
@@ -119,8 +119,8 @@ At session end, append a calibration entry for the framework work this session p
 Inside `~/ventures/vibeboss/`:
 - Source code (Phase 1+ when framework code starts)
 - `templates/` updates
-- `docs/superpowers/specs/` new specs
-- `docs/superpowers/plans/` new plans
+- `docs/design/specs/` new specs
+- `docs/design/plans/` new plans
 - `decisions/` (cross-framework decisions)
 - `CHANGELOG.md`
 - `README.md` updates

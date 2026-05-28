@@ -2,7 +2,7 @@
 
 This is the OSS source for **Vibeboss**, an autonomous-AI operating system for vibe coders (non-technical 40+ business operators). This file documents the *patterns* Vibeboss publishes; it is the entry point for anyone cloning this repository.
 
-If you are running a Vibeboss installation, your runtime memory lives in a separate workspace directory (not here). See [docs/superpowers/specs/2026-05-26-topology-hq-split-design.md](docs/superpowers/specs/2026-05-26-topology-hq-split-design.md) — short version: source goes here (this repo), all runtime state goes to a sibling `vibeboss-workspace/` directory you create on first init.
+If you are running a Vibeboss installation, your runtime memory lives in a separate workspace directory (not here). See [docs/design/specs/2026-05-26-topology-hq-split-design.md](docs/design/specs/2026-05-26-topology-hq-split-design.md) — short version: source goes here (this repo), all runtime state goes to a sibling `vibeboss-workspace/` directory you create on first init.
 
 ## What Vibeboss is
 
@@ -31,7 +31,7 @@ See [`CHIEF.md`](CHIEF.md) for Vibe Chief's full boot brief and discipline.
 
 ## The published primitives
 
-1. **HQ + per-project memory** — separation of cross-cutting memory (lessons, decisions, runlog) from per-project memory (`hq/projects/<name>/`). See [docs/superpowers/specs/2026-05-26-topology-hq-split-design.md](docs/superpowers/specs/2026-05-26-topology-hq-split-design.md).
+1. **HQ + per-project memory** — separation of cross-cutting memory (lessons, decisions, runlog) from per-project memory (`hq/projects/<name>/`). See [docs/design/specs/2026-05-26-topology-hq-split-design.md](docs/design/specs/2026-05-26-topology-hq-split-design.md).
 2. **Runlog discipline** — every meaningful work session ends with an append-only runlog entry capturing goal, what-happened, commands, files-touched, state-at-end, next.
 3. **Decisions discipline** — non-trivial choices land as immutable `YYYY-MM-DD-<slug>.md` decision files. Supersession via new files, never overwrite.
 4. **LESSONS as hard-gates** — operator corrections become structural rules re-read at the top of every session. Violation gets logged; repeat violations indicate the rule wording needs revision.
@@ -67,7 +67,7 @@ vibeboss/                            ← OSS source. Apache 2.0. Framework only.
 │   └── labs/
 ├── decisions/                       ← framework-level decisions (Vibe Chief writes here)
 ├── docs/
-│   └── superpowers/
+│   └── design/
 │       ├── specs/                   ← design specs for each primitive
 │       └── plans/                   ← implementation plans
 └── (framework code, Phase 1+)

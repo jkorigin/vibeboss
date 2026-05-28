@@ -48,4 +48,4 @@ The "When to invoke" hard gate at the top of the skill is **unchanged**. The dec
 
 ## Supersedes
 
-Nothing direct — this is the first time the round-count gates have been revised. The original SKILL.md authoring (in `docs/superpowers/specs/2026-05-26-dev-workflow-skill-design.md`) remains the rationale for *why* three rounds is the default.
+Nothing direct — this is the first time the round-count gates have been revised. The original SKILL.md authoring (in `docs/design/specs/2026-05-26-dev-workflow-skill-design.md`) remains the rationale for *why* three rounds is the default.

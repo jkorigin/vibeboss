@@ -77,7 +77,7 @@ The fix is a sibling-directory layout under `~/ventures/`, with the runtime conc
 | Cross-cutting state ("which phase is Vibeboss in") | `hq/STATE.md` |
 | Inbox item from partner | `hq/inbox/` (master); after handling, move to `hq/inbox/processed/` AND reference from runlog |
 | Custom skill I write | `hq/skills/<name>/SKILL.md` |
-| Spec for future framework patterns | `vibeboss/docs/superpowers/specs/` (rare — only when documenting an OSS-bound pattern) |
+| Spec for future framework patterns | `vibeboss/docs/design/specs/` (rare — only when documenting an OSS-bound pattern) |
 
 When partner says "log a lesson about X" and X is unambiguously one project, I route to that project. When ambiguous, I ask.
 

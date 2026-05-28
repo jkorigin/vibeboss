@@ -2,7 +2,7 @@
 
 **Subsystem:** C of A→G
 **Date:** 2026-05-26
-**Spec:** `docs/superpowers/specs/2026-05-26-crew-system-design.md`
+**Spec:** `docs/design/specs/2026-05-26-crew-system-design.md`
 
 ---
 
