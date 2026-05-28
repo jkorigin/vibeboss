@@ -18,7 +18,14 @@ hq/projects/<name>/
 The named agent for this project checks `inbox/requests/` on every boot.
 
 **To add a project:**
-1. Create `hq/projects/<name>/` with the structure above
-2. Add a crew entry in `hq/crew.yml`
-3. Update `hq/CLAUDE.md` authorizations section
-4. Write a decision file: `hq/decisions/YYYY-MM-DD-add-project-<name>.md`
+
+```
+bash ~/ventures/vibeboss/init.sh --add-project <name>
+```
+
+That scaffolds the standard structure above, assigns the next crew name from `hq/crew.yml` `next_available`, symlinks Vibeboss-native skills (`dev-workflow`, `compact-handover`) into the project's `.claude/skills/`, and prints follow-up steps.
+
+Manual finishing touches (Boss owns these on first spawn, so they land in the runlog/decisions):
+1. Add the new crew member to `hq/crew.yml` `agents[]`
+2. Update `hq/CLAUDE.md` authorizations section
+3. Write a decision file: `hq/decisions/YYYY-MM-DD-add-project-<name>.md`

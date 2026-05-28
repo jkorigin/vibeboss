@@ -1,0 +1,12 @@
+# {{PROJECT_NAME}} — per-project crew snippet
+#
+# This is a local mirror of the build lead's row in hq/crew.yml. The canonical
+# source of truth is still hq/crew.yml — update both when status changes, or
+# treat this file as informational only.
+
+lead:
+  name: {{CREW_NAME}}
+  role: build lead
+  project: {{PROJECT_NAME}}
+  born_at: {{DATE}}
+  current_session_id: null

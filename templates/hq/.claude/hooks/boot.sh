@@ -11,8 +11,59 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HQ="$(cd "$SCRIPT_DIR/../.." && pwd)"
+WORKSPACE="$(cd "$HQ/.." && pwd)"
 
 TODAY="$(date '+%Y-%m-%d')"
+
+# STOP-file kill switch — existence is the entire signal.
+# Triggers: operator `touch STOP`, agent self-cap, three-strikes low-signal.
+# Recovery: operator removes STOP file AND issues an explicit re-authorization.
+STOP_PATH=""
+if [ -e "$HQ/STOP" ]; then
+  STOP_PATH="$HQ/STOP"
+elif [ -e "$WORKSPACE/STOP" ]; then
+  STOP_PATH="$WORKSPACE/STOP"
+fi
+
+if [ -n "$STOP_PATH" ]; then
+  STOP_SIZE="$(wc -c < "$STOP_PATH" 2>/dev/null | tr -d ' ' || echo '0')"
+  STOP_BRIEF="$(cat <<STOP_EOF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  VIBEBOSS HQ — STOPPED
+  ${TODAY}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A STOP file was detected at:
+  ${STOP_PATH}
+
+The autonomous loop or boot sequence is halted. {{LEAD_NAME}} will NOT auto-start work.
+
+Recovery:
+  1. Decide whether the halt was intentional or accidental.
+  2. If intentional and now resolved: \`rm ${STOP_PATH}\` (the STOP file).
+  3. Re-authorize with an explicit directive ({{LEAD_NAME}} should not infer next steps from history alone — wait for partner instruction).
+
+STOP file size: ${STOP_SIZE} bytes — purely diagnostic; existence is the signal regardless of content.
+STOP_EOF
+)"
+
+  if [ "$BRIEF_ONLY" = "true" ]; then
+    printf '%s\n' "$STOP_BRIEF"
+    exit 0
+  fi
+
+  BRIEF_CONTENT="$STOP_BRIEF" python3 - <<'PYEOF'
+import json, os
+brief = os.environ["BRIEF_CONTENT"]
+print(json.dumps({
+    "hookSpecificOutput": {
+        "hookEventName": "SessionStart",
+        "additionalContext": brief
+    }
+}))
+PYEOF
+  exit 0
+fi
 
 # Phase: first **Phase:** line in STATE.md
 PHASE="$(grep -m1 '^\*\*Phase:\*\*' "$HQ/STATE.md" 2>/dev/null \

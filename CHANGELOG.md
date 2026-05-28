@@ -2,44 +2,42 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
-## [v0.1.0] — 2026-05-26 — first OSS-ready cut
+## [unreleased] — v0.2.1 in progress — PPSB foundation (2026-05-28)
 
-The 7-subsystem framework arc + Vibe Chief mode shipped. Vibeboss is now installable from a clone in under 2 minutes via `init.sh`, and enhanceable via `reno.sh`.
+The Per-Project Skill Bundle (PPSB) architecture lands. Every project Boss creates now ships its own `.claude/settings.json` with `superpowers@claude-plugins-official` enabled by default, plus symlinks to Vibeboss's native skills. Per-project, never machine-wide. Also: STOP-file kill switch (closes a Phase 1 ROADMAP item), bidirectional inbox topology (stolen from <coordinator-agent> in `<other-multi-repo>/`), and a recommended-companions doc surface.
 
 ### Added
 
-- **Subsystem A — Topology + HQ split.** Source/runtime separation: `vibeboss/` source vs `vibeboss-workspace/{hq, labs, projects/}` runtime. Per-project memory routing under `hq/projects/<name>/`. See [docs/superpowers/specs/2026-05-26-topology-hq-split-design.md](docs/superpowers/specs/2026-05-26-topology-hq-split-design.md).
-- **Subsystem B — Dev-workflow skill.** The standard build loop (research → build → test → ≥3 bug-fix → fresh-agent review → ≥3 tighten → human gate) codified as a skill installed at `hq/skills/dev-workflow/SKILL.md`. LESSON-005 wires it into Boss's decision loop.
-- **Subsystem C — Crew system.** Per-project named build leads in `hq/crew.yml`. Inbox dispatch (`hq/projects/<name>/inbox/requests/`) for async; spawn dispatch (`claude --session-id <uuid>`) for sync. Naming theme: produce (vegetables / fruits / herbs).
-- **Subsystem D — Auto-boot.** SessionStart hook at `hq/.claude/settings.json` calls `boot.sh` on every fresh/resumed session and injects the boot brief as `additionalContext`. Partner never types `boot`.
-- **Subsystem E — Compact handover protocol.** Pre-`/compact` ritual writes a structured handover file at `hq/handovers/YYYY-MM-DD-HHMM-<slug>.md`. Post-compact hook (`compact-boot.sh`) injects the latest handover as additional context. Session never closes. Five self-monitoring triggers (T1-T5) defined in `hq/skills/compact-handover/SKILL.md`. LESSON-006 hard-gates the discipline.
-- **Subsystem F-ish — Labs as continuous research function.** `vibeboss-workspace/labs/` mirrors project structure (`research/<project-name>/`, plus an `hq/` track for framework research). The labs lead identity (Ginger) is reserved in the template `labs/crew.yml`. Three protocols documented: Boss→labs, dev-lead→labs, labs→dev-lead handoff.
-- **Subsystem G — `init.sh` installer.** Single-command workspace scaffolding from `templates/`. 6 interactive prompts, 4 modes (fresh/noninteractive/upgrade/dry-run), 34 template files, smoke test verifies a clean install. Quick Start documented in README.
-- **Master dashboard.** `vibeboss-workspace/hq/dashboard/` — Bun-served operator view at port 3100 surfacing all running CC sessions, per-project status, JSONL activity stream, and HQ state. Currently lives in the partner's workspace; a `dashboard-bootstrap.sh` template for OSS users is a deferred follow-up.
-- **Vibe Chief mode.** `bash reno.sh` boots Vibe Chief — the framework canon caretaker — at the source repo. SessionStart hook at `vibeboss/.claude/` routes to either Vibe Chief (when `VIBEBOSS_RENO=1`) or a polite redirect (when partner accidentally cd's here). Decision documenting the dual-mode pattern at `decisions/2026-05-26-dual-mode-boss-and-vibe-chief.md` (forthcoming).
+- **Per-project skill bundle (PPSB) baseline.** New template at `templates/projects/_per_project/` defines the scaffold Boss applies to every project: `.claude/settings.json` pre-seeded with `enabledPlugins["superpowers@claude-plugins-official"]: true`, project-scoped STATE/runlog/decisions/handovers/inbox topology, per-project `crew.yml` snippet. When scaffolded, Vibeboss native skills (`dev-workflow`, `compact-handover`) are symlinked from `hq/skills/` so build leads dispatched into the project inherit the discipline.
+- **`init.sh --add-project <name>` mode.** New scaffolding flag: reads `hq/crew.yml`'s `next_available` for the produce-themed crew name, computes `LEAD_NAME` from `venture_lead.name`, scaffolds the per-project template with placeholder substitution, creates the skill symlinks, prints next-steps. Reuses the existing substitute/write_file/ensure_dir helpers. Does NOT auto-mutate `hq/crew.yml` agents[] — Boss does that at first spawn so the runlog records the birth event.
+- **STOP-file kill switch.** `templates/hq/.claude/hooks/boot.sh` now checks `$HQ/STOP` and `$WORKSPACE/STOP` first thing. If either exists (zero-byte sentinel — existence IS the signal), emits a HALTED brief and exits cleanly. Three triggers documented: operator kill (`touch STOP`), agent self-cap, workspace-wide halt. Recovery requires both `rm STOP` AND explicit re-authorization from the operator. Closes the Phase 1 ROADMAP item; mechanism ported from `<other-research-project>/AUTONOMOUS-BRIEF.md`.
+- **Bidirectional inbox topology.** Two layers now: Layer 1 keeps the legacy type-folder topology (`inbox/{requests,chats,todos,processed}/`) for backwards compatibility; Layer 2 introduces per-counterparty inbox files (`inbox/<counterparty>.md`) with append-only messages, `unread → seen → acted → escalated → closed` status lifecycle, `THREAD-<slug>` IDs for threading, and a disposition-footer protocol that closes the loop (every artifact a counterparty produces gets a Disposition block citing the originating thread, mirrored back to the inbox message). Pattern stolen from <coordinator-agent> in `<other-multi-repo>/inbox/` + `<other-research-project>/CONTRACT.md §4`.
+- **Per-project inbox documented as DOWN-only by default.** Asymmetric topology: HQ has bidirectional inboxes per counterparty; projects have only DOWN (Boss writes TO the project's lead at `<project>/inbox/boss.md`). Project leads write UP back to `hq/inbox/<lead-name>.md`. Documented in both `templates/hq/inbox/README.md` and `templates/projects/_per_project/inbox/README.md`.
+- **Disposition-footer protocol.** Whenever a counterparty acts on a request and produces an artifact (decision, runlog entry, deliverable), they append a `## Disposition` block to both the originating inbox message AND the produced artifact, with `Verdict / Result / Rationale / Closed thread` fields and a backlink. Loop closes; readers of the artifact see what was adopted without spelunking the inbox.
+- **HQ baseline plugin enable.** `templates/hq/.claude/settings.json` now ships with `enabledPlugins["superpowers@claude-plugins-official"]: true` — Boss gets superpowers as baseline too, not just spawned crew.
+- **`## Recommended companions` section in README.** Documents superpowers as auto-enabled baseline, lists a curated opt-in pool from Anthropic's official marketplace (context7, code-review, pr-review-toolkit, commit-commands, frontend-design, playwright, hookify, skill-creator, claude-md-management, feature-dev, figma, vercel, firebase, sourcegraph, Notion), and mentions gstack as external (with the Bun caveat, install per upstream README). Vibeboss never auto-clones — it points.
+- **`Acknowledgements` block in NOTICE.** MIT attribution for superpowers (Jesse Vincent) and gstack (Garry Tan) with upstream URLs.
+- **Smoke test extended.** `tests/init-smoke.sh` now exercises `--add-project` (project tree shape, symlinks present, `enabledPlugins` baseline correct, all placeholders substituted) and the STOP-file kill switch (HALTED brief on touch, normal brief after rm). CI still green on Ubuntu.
+- `decisions/2026-05-28-per-project-skill-bundle.md` — documents the PPSB architecture, three skill classes (baseline / recommended / custom), why per-project not machine-wide, and the v0.2.1 vs v0.3.0 staging plan.
 
-### Discipline rules (LESSONS that ship with the framework templates)
+### Changed
 
-- **LESSON-001:** Identity — Boss / partner naming convention.
-- **LESSON-002:** Default to build, not improve-the-office.
-- **LESSON-003:** Research-first on ambiguity (refinement of LESSON-002).
-- **LESSON-004:** Default execution mode is subagent-driven.
-- **LESSON-005:** Invoke `dev-workflow` skill before any non-trivial implementation.
-- **LESSON-006:** Write compact-handover BEFORE `/compact`. No exceptions.
+- `templates/hq/projects/README.md` rewritten to point at `bash ~/ventures/vibeboss/init.sh --add-project <name>` as the canonical scaffolding command.
+- `templates/hq/CLAUDE.md` inbox section replaced with a one-paragraph pointer to `hq/inbox/README.md` plus the DOWN-only asymmetry rule; new `### STOP-file kill switch` subsection added near the Boot sequence.
+- `templates/hq/STATE.md` carries a one-line HTML comment under "Current state" referencing the STOP kill switch.
+- `templates/_workspace_root/.gitignore` (new) — gitignores `/STOP`, `/hq/STOP`, `/labs/STOP`, `/projects/*/STOP` at workspace scope. Existence-is-the-signal must never be committed.
+- `ROADMAP.md` updated: STOP-file kill switch moved to "Recently shipped (v0.2.1)"; per-project skill bundle moved to shipped; bidirectional inbox moved to shipped; new "Phase 1.5 — PPSB Phase 2 (v0.3.0)" section tracks the vibeboss-natives marketplace, full add-project Boss skill (interactive recommend menu), and HQ refactor.
+- `VERSION` bumped to `0.2.1-dev`.
 
-### Known follow-ups (deferred to v0.2.0 or later)
+### Deferred (v0.3.0)
 
-- **Portable hook paths in `vibeboss/.claude/settings.json`.** The hook command was hardcoded to an absolute path, breaking on any clone at a different path. Fix via `reno.sh` self-substitution (see decisions/2026-05-26-portable-hook-paths.md). Tracked as the highest-priority v0.2.0 fix.
-- `dashboard-bootstrap.sh` template — package the master dashboard scaffold so OSS users can install it.
-- Windows support — `init.sh` currently rejects Windows; needs `mingw`/`cygwin`/`msys` compatibility.
-- `vibeboss add-project <name>` — interactive project scaffolder.
-- Shell alias support — `vibeboss reno` as a real command instead of `bash reno.sh`. Plus an `alias vb='cd ~/ventures/vibeboss-workspace/hq && claude'` suggestion in install output (or auto-injected into shell rc on install).
-- **Workspace-root SessionStart redirect in templates.** Users who accidentally `cd ~/ventures/vibeboss-workspace/` (instead of `hq/`) currently get a vanilla Claude session with no Boss context — confusing failure mode. Fix: add `templates/_workspace_root/.claude/{settings.json,hooks/redirect.{sh,md}}` and have `init.sh` install it at workspace root. Already implemented manually for the current installation at `vibeboss-workspace/.claude/`; needs templating for future users.
-- Long-running framework agent code — Phase 1 begins when this lands.
+- **`vibeboss-natives@vibeboss` marketplace.** Currently dev-workflow + compact-handover are file-based skills symlinked into each project. v0.3.0 publishes a `.claude-plugin/marketplace.json` so cloners activate via `/plugin marketplace add jkorigin/vibeboss` + `enabledPlugins["vibeboss-natives@vibeboss"]: true`. Uniform with superpowers. Clean update story.
+- **Full `add-project` Boss skill** with interactive recommend-menu UX. Current `init.sh --add-project` is a CLI baseline; v0.3.0 promotes to a SKILL.md Boss invokes when the operator says "new project X", with an opinionated prompt flow that asks which recommended skills to enable.
+- **HQ template refactor** to use the marketplace once published — removes the file-based skill symlinking, switches to enabledPlugins.
 
----
+## [v0.2.0] — 2026-05-27 — audit-fix pass
 
-## [unreleased] — v0.2.0 in progress
+Full self-audit + fix pass. Honest README repositioning, portable `${CLAUDE_PROJECT_DIR}` hook paths (supersedes the trap-restore mechanism), the framework's first test + CI workflow, dev-workflow round-count softening, partner-data scrub round 2, plus VERSION + `--version` flag scaffolding.
 
 ### Fixed (OSS-ready cleanup pass — 2026-05-26)
 
@@ -110,7 +108,41 @@ Full self-audit identified overclaims in the README, residual partner-specific d
 
 - `dashboard-bootstrap.sh` template — dashboard scaffold for OSS users.
 - Windows support (`mingw`/`cygwin`/`msys` compatibility).
-- `vibeboss add-project <name>` interactive scaffolder.
 - Shell alias injection (`alias vb=...`) into user's shell rc.
 - `--rename` mode for `init.sh` — post-install identity renames.
 - **Git hooks for co-author attribution.** Local-only `.git/hooks/prepare-commit-msg` was installed in this clone to auto-rewrite Claude Code's `Co-Authored-By: Claude ...` trailer to `vibechief <vibechief@vibeboss.local>` (in `vibeboss/`) or `boss <boss@vibeboss.local>` (in `vibeboss-workspace/*`). Hook is *not* tracked in the repo because `.git/hooks/` is local-only. Fix: commit a `tools/install-hooks.sh` that installs hooks from `tools/hooks/prepare-commit-msg` into `.git/hooks/`. `init.sh` should also install the hook into any new git repos partner creates in `vibeboss-workspace/*` so attribution is automatic everywhere.
+
+## [v0.1.0] — 2026-05-26 — first OSS-ready cut
+
+The 7-subsystem framework arc + Vibe Chief mode shipped. Vibeboss is now installable from a clone in under 2 minutes via `init.sh`, and enhanceable via `reno.sh`.
+
+### Added
+
+- **Subsystem A — Topology + HQ split.** Source/runtime separation: `vibeboss/` source vs `vibeboss-workspace/{hq, labs, projects/}` runtime. Per-project memory routing under `hq/projects/<name>/`. See [docs/superpowers/specs/2026-05-26-topology-hq-split-design.md](docs/superpowers/specs/2026-05-26-topology-hq-split-design.md).
+- **Subsystem B — Dev-workflow skill.** The standard build loop (research → build → test → ≥3 bug-fix → fresh-agent review → ≥3 tighten → human gate) codified as a skill installed at `hq/skills/dev-workflow/SKILL.md`. LESSON-005 wires it into Boss's decision loop.
+- **Subsystem C — Crew system.** Per-project named build leads in `hq/crew.yml`. Inbox dispatch (`hq/projects/<name>/inbox/requests/`) for async; spawn dispatch (`claude --session-id <uuid>`) for sync. Naming theme: produce (vegetables / fruits / herbs).
+- **Subsystem D — Auto-boot.** SessionStart hook at `hq/.claude/settings.json` calls `boot.sh` on every fresh/resumed session and injects the boot brief as `additionalContext`. Partner never types `boot`.
+- **Subsystem E — Compact handover protocol.** Pre-`/compact` ritual writes a structured handover file at `hq/handovers/YYYY-MM-DD-HHMM-<slug>.md`. Post-compact hook (`compact-boot.sh`) injects the latest handover as additional context. Session never closes. Five self-monitoring triggers (T1-T5) defined in `hq/skills/compact-handover/SKILL.md`. LESSON-006 hard-gates the discipline.
+- **Subsystem F-ish — Labs as continuous research function.** `vibeboss-workspace/labs/` mirrors project structure (`research/<project-name>/`, plus an `hq/` track for framework research). The labs lead identity (Ginger) is reserved in the template `labs/crew.yml`. Three protocols documented: Boss→labs, dev-lead→labs, labs→dev-lead handoff.
+- **Subsystem G — `init.sh` installer.** Single-command workspace scaffolding from `templates/`. 6 interactive prompts, 4 modes (fresh/noninteractive/upgrade/dry-run), 34 template files, smoke test verifies a clean install. Quick Start documented in README.
+- **Master dashboard.** `vibeboss-workspace/hq/dashboard/` — Bun-served operator view at port 3100 surfacing all running CC sessions, per-project status, JSONL activity stream, and HQ state. Currently lives in the partner's workspace; a `dashboard-bootstrap.sh` template for OSS users is a deferred follow-up.
+- **Vibe Chief mode.** `bash reno.sh` boots Vibe Chief — the framework canon caretaker — at the source repo. SessionStart hook at `vibeboss/.claude/` routes to either Vibe Chief (when `VIBEBOSS_RENO=1`) or a polite redirect (when partner accidentally cd's here). Decision documenting the dual-mode pattern at `decisions/2026-05-26-dual-mode-boss-and-vibe-chief.md` (forthcoming).
+
+### Discipline rules (LESSONS that ship with the framework templates)
+
+- **LESSON-001:** Identity — Boss / partner naming convention.
+- **LESSON-002:** Default to build, not improve-the-office.
+- **LESSON-003:** Research-first on ambiguity (refinement of LESSON-002).
+- **LESSON-004:** Default execution mode is subagent-driven.
+- **LESSON-005:** Invoke `dev-workflow` skill before any non-trivial implementation.
+- **LESSON-006:** Write compact-handover BEFORE `/compact`. No exceptions.
+
+### Known follow-ups (deferred to v0.2.0 or later — most now shipped in v0.2.0 / v0.2.1)
+
+- **Portable hook paths in `vibeboss/.claude/settings.json`.** — Shipped in v0.2.0 via `${CLAUDE_PROJECT_DIR}`.
+- `dashboard-bootstrap.sh` template — still deferred.
+- Windows support — still deferred.
+- `vibeboss add-project <name>` — CLI baseline shipped in v0.2.1; full Boss skill version v0.3.0.
+- Shell alias support — still deferred.
+- **Workspace-root SessionStart redirect in templates.** — Shipped in v0.2.0 cleanup pass.
+- Long-running framework agent code — Phase 1 begins when this lands.

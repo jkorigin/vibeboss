@@ -120,6 +120,81 @@ if [ -n "$PLACEHOLDER_HITS" ]; then
   fail "unresolved {{...}} placeholders found in generated markdown:"$'\n'"$PLACEHOLDER_HITS"
 fi
 
+# ─── Exercise --add-project (PPSB scaffolding) ───────────────────────────────
+echo ""
+echo "Running: bash init.sh --add-project smoke-proj --workspace '$TMPWS'"
+
+set +e
+bash "$REPO_DIR/init.sh" --add-project smoke-proj --workspace "$TMPWS" >/dev/null
+ADDPROJ_STATUS=$?
+set -e
+
+if [ "$ADDPROJ_STATUS" -ne 0 ]; then
+  fail "init.sh --add-project exited with status $ADDPROJ_STATUS"
+else
+  # Project tree shape
+  check_file "$TMPWS/hq/projects/smoke-proj/STATE.md"
+  check_file "$TMPWS/hq/projects/smoke-proj/README.md"
+  check_file "$TMPWS/hq/projects/smoke-proj/crew.yml"
+  check_file "$TMPWS/hq/projects/smoke-proj/inbox/README.md"
+  check_file "$TMPWS/hq/projects/smoke-proj/inbox/boss.md"
+  check_file "$TMPWS/hq/projects/smoke-proj/runlog/README.md"
+  check_file "$TMPWS/hq/projects/smoke-proj/decisions/README.md"
+  check_file "$TMPWS/hq/projects/smoke-proj/handovers/README.md"
+  check_file "$TMPWS/hq/projects/smoke-proj/.claude/settings.json"
+
+  # Symlinks for vibeboss-native skills
+  if [ ! -L "$TMPWS/hq/projects/smoke-proj/.claude/skills/dev-workflow" ]; then
+    fail "missing or non-symlink: .claude/skills/dev-workflow"
+  fi
+  if [ ! -L "$TMPWS/hq/projects/smoke-proj/.claude/skills/compact-handover" ]; then
+    fail "missing or non-symlink: .claude/skills/compact-handover"
+  fi
+
+  # enabledPlugins baseline
+  if ! grep -q "superpowers@claude-plugins-official" "$TMPWS/hq/projects/smoke-proj/.claude/settings.json" 2>/dev/null; then
+    fail "project settings.json missing superpowers@claude-plugins-official baseline"
+  fi
+
+  # Placeholders fully substituted in project files
+  PROJ_PLACEHOLDERS=""
+  while IFS= read -r f; do
+    if grep -l '{{[^}]*}}' "$f" >/dev/null 2>&1; then
+      PROJ_PLACEHOLDERS="$PROJ_PLACEHOLDERS$f"$'\n'
+    fi
+  done < <(find "$TMPWS/hq/projects/smoke-proj" -type f -name '*.md')
+  if [ -n "$PROJ_PLACEHOLDERS" ]; then
+    fail "unresolved {{...}} placeholders in scaffolded project:"$'\n'"$PROJ_PLACEHOLDERS"
+  fi
+fi
+
+# ─── STOP-file kill switch test ──────────────────────────────────────────────
+echo "Testing STOP-file kill switch..."
+
+touch "$TMPWS/hq/STOP"
+set +e
+STOP_OUT="$("$TMPWS/hq/.claude/hooks/boot.sh" --brief-only 2>/dev/null)"
+STOP_STATUS=$?
+set -e
+rm -f "$TMPWS/hq/STOP"
+
+if [ "$STOP_STATUS" -ne 0 ]; then
+  fail "boot.sh exited nonzero ($STOP_STATUS) when STOP file present"
+elif ! printf '%s' "$STOP_OUT" | grep -q "STOPPED"; then
+  fail "boot.sh did not emit STOPPED brief when STOP file present"
+fi
+
+# Verify normal boot resumes after STOP removed
+set +e
+RESUME_OUT="$("$TMPWS/hq/.claude/hooks/boot.sh" --brief-only 2>/dev/null)"
+RESUME_STATUS=$?
+set -e
+if [ "$RESUME_STATUS" -ne 0 ]; then
+  fail "boot.sh exited nonzero ($RESUME_STATUS) after STOP removed"
+elif ! printf '%s' "$RESUME_OUT" | grep -q "online"; then
+  fail "boot.sh did not return to normal brief after STOP removed"
+fi
+
 # ─── Report ──────────────────────────────────────────────────────────────────
 if [ "${#FAILURES[@]}" -gt 0 ]; then
   echo ""

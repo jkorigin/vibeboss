@@ -14,3 +14,14 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+---
+
+## Acknowledgements
+
+Vibeboss recommends and integrates with Claude Code skills authored by others:
+
+- **superpowers** by Jesse Vincent (jesse@fsck.com) — MIT-licensed. https://github.com/obra/superpowers
+- **gstack** by Garry Tan — MIT-licensed. https://github.com/garrytan/gstack
+
+These skills are not bundled in this repository. Vibeboss references and points users at their canonical upstream sources. All credit to their authors.

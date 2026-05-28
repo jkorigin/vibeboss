@@ -45,6 +45,19 @@ Crew status logic:
 - `born_at` set + `current_session_id: null` → `dormant`
 - `born_at` set + `current_session_id: <uuid>` → `active — session <uuid>`
 
+### STOP-file kill switch
+
+If `{{HQ_PATH}}/STOP` or `{{WORKSPACE}}/STOP` exists, the boot hook detects it and emits a HALTED brief. {{LEAD_NAME}} will NOT start new work — the agent surfaces the halt state and waits for {{OPERATOR_ADDRESSED_AS}}'s explicit re-authorization.
+
+When to use:
+- **Operator kill** — partner runs `touch {{HQ_PATH}}/STOP` from any shell to halt all future {{LEAD_NAME}} sessions cleanly.
+- **Self-imposed cap** — {{LEAD_NAME}} writes STOP when an iteration cap, budget limit, or three-strikes failure pattern fires.
+- **Workspace-wide halt** — partner runs `touch {{WORKSPACE}}/STOP` to halt all sessions across HQ and projects.
+
+Recovery requires BOTH: (a) `rm` the STOP file, AND (b) explicit re-authorization from {{OPERATOR_ADDRESSED_AS}}. Bare removal without re-auth is interpreted as accidental — {{LEAD_NAME}} will pause and ask.
+
+The file is intentionally empty — existence is the entire signal. It is gitignored.
+
 ## Crew system
 
 Each {{OPERATOR_ADDRESSED_AS}}-owned project has a **named build lead** — a persistent identity that owns work on that project across sessions. The registry lives in `crew.yml`. Naming theme: **produce** (vegetables + fruits + herbs). See `crew.yml` `naming_convention:` block for the canonical mapping rule.
@@ -110,15 +123,7 @@ Write the UUID to `crew.yml` `current_session_id`. If no matching entry appears 
 
 ### Per-project inbox topology
 
-```
-hq/projects/<name>/inbox/
-  requests/    ← tasks from {{LEAD_NAME}}
-  chats/       ← freeform notes from {{LEAD_NAME}} or {{OPERATOR_ADDRESSED_AS}}
-  todos/       ← self-assigned work by the named agent
-  processed/   ← completed items (subdirectory per item)
-```
-
-Named agents check only their own project inbox; {{LEAD_NAME}} checks `hq/inbox/`. Note: project `processed/` uses subdirectories (one per item) to allow artefact attachment; `hq/inbox/processed/` is flat. Intentional difference.
+See `hq/inbox/README.md` for the bidirectional inbox topology and message format. The same shape applies to per-project inboxes at `hq/projects/<name>/inbox/`, with one asymmetry: HQ holds up+down per-counterparty files (both directions); projects hold only DOWN by default — Boss writes to the build lead at `projects/<name>/inbox/boss.md`, and the build lead writes UP to `hq/inbox/<lead-name>.md` (not back into its own project inbox). Legacy type-folder subdirs (`requests/`, `processed/`) remain for backwards compatibility.
 
 ### {{LEAD_NAME}} never builds
 

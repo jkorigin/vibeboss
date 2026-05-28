@@ -11,6 +11,7 @@
 #   --noninteractive        skip prompts; require --name and --email
 #   --upgrade               add missing files to an existing workspace (idempotent)
 #   --dry-run               show what would be done without writing anything
+#   --add-project <name>    scaffold a new project under an existing workspace
 #   -h, --help              show this help message
 set -euo pipefail
 
@@ -36,6 +37,9 @@ LAB_LEAD_NAME="Ginger"
 NONINTERACTIVE=false
 UPGRADE=false
 DRY_RUN=false
+ADD_PROJECT_MODE=false
+PROJECT_NAME=""
+CREW_NAME=""
 
 usage() {
   cat <<EOF
@@ -51,6 +55,11 @@ Options:
   --noninteractive        skip prompts; require --name and --email
   --upgrade               add missing files to an existing workspace (idempotent)
   --dry-run               show what would be done without writing anything
+  --add-project <name>    scaffold a new project under an existing workspace
+                          (requires the workspace to already exist; assigns
+                           the next crew name from hq/crew.yml next_available
+                           and symlinks Vibeboss-native skills into the
+                           project's .claude/skills/)
   --version, -v           print framework version and exit
   -h, --help              show this help message
 EOF
@@ -67,6 +76,11 @@ while [[ $# -gt 0 ]]; do
     --noninteractive) NONINTERACTIVE=true;          shift   ;;
     --upgrade|--repair) UPGRADE=true;              shift   ;;
     --dry-run)        DRY_RUN=true;                shift   ;;
+    --add-project)
+      ADD_PROJECT_MODE=true
+      PROJECT_NAME="$2"
+      shift 2
+      ;;
     --version|-v)
       cat "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/VERSION"
       exit 0
@@ -106,15 +120,249 @@ case "$OS" in
 esac
 
 # ─── Banner ──────────────────────────────────────────────────────────────────
+if $ADD_PROJECT_MODE; then
+cat <<'BANNER'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Vibeboss — add project
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BANNER
+else
 cat <<'BANNER'
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   Vibeboss — workspace init
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BANNER
+fi
 
 if $DRY_RUN; then
   warn "DRY RUN — no files will be written."
+fi
+
+# Default workspace path (used by both fresh-init and --add-project modes)
+DEFAULT_WORKSPACE="$HOME/ventures/vibeboss-workspace"
+
+# ─── Helpers (used by both modes) ────────────────────────────────────────────
+# substitute — replaces placeholders in a string
+substitute() {
+  local text="$1"
+  text="${text//\{\{LEAD_NAME\}\}/$LEAD_NAME}"
+  text="${text//\{\{OPERATOR_NAME\}\}/$OPERATOR_NAME}"
+  text="${text//\{\{OPERATOR_EMAIL\}\}/$OPERATOR_EMAIL}"
+  text="${text//\{\{OPERATOR_ADDRESSED_AS\}\}/$OPERATOR_ADDRESSED_AS}"
+  text="${text//\{\{LAB_LEAD_NAME\}\}/$LAB_LEAD_NAME}"
+  text="${text//\{\{WORKSPACE\}\}/$WORKSPACE}"
+  text="${text//\{\{HQ_PATH\}\}/$HQ_PATH}"
+  text="${text//\{\{DATE\}\}/$TODAY}"
+  text="${text//\{\{PROJECT_NAME\}\}/$PROJECT_NAME}"
+  text="${text//\{\{CREW_NAME\}\}/$CREW_NAME}"
+  printf '%s' "$text"
+}
+
+# write_file — write a file from a template, substituting placeholders
+# Usage: write_file <src_template> <dest_path>
+write_file() {
+  local src="$1"
+  local dest="$2"
+
+  if $UPGRADE && [ -f "$dest" ]; then
+    return 0  # skip existing files in upgrade mode
+  fi
+
+  local dest_dir
+  dest_dir="$(dirname "$dest")"
+
+  if $DRY_RUN; then
+    echo "    [dry-run] would write: $dest"
+    return 0
+  fi
+
+  mkdir -p "$dest_dir"
+  local content
+  content="$(cat "$src")"
+  substitute "$content" > "$dest"
+}
+
+# ensure_dir — create a directory (skips in dry-run)
+ensure_dir() {
+  if $DRY_RUN; then
+    echo "    [dry-run] would create dir: $1"
+  else
+    mkdir -p "$1"
+  fi
+}
+
+# touch_file — create an empty file if it doesn't exist
+touch_file() {
+  local dest="$1"
+  if $UPGRADE && [ -f "$dest" ]; then
+    return 0
+  fi
+  if $DRY_RUN; then
+    echo "    [dry-run] would touch: $dest"
+    return 0
+  fi
+  mkdir -p "$(dirname "$dest")"
+  touch "$dest"
+}
+
+# ─── --add-project mode ──────────────────────────────────────────────────────
+if $ADD_PROJECT_MODE; then
+  if [ -z "$PROJECT_NAME" ]; then
+    error "--add-project requires a project name"
+    echo "  Example: bash init.sh --add-project <example-project>" >&2
+    exit 1
+  fi
+
+  # Sanity-check the project name (alphanumeric, dash, underscore only)
+  if [[ ! "$PROJECT_NAME" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    error "Invalid project name: $PROJECT_NAME"
+    echo "  Use only letters, numbers, dashes, and underscores." >&2
+    exit 1
+  fi
+
+  # Resolve workspace
+  if [ -z "$WORKSPACE" ]; then
+    WORKSPACE="$DEFAULT_WORKSPACE"
+  fi
+  WORKSPACE="${WORKSPACE/#\~/$HOME}"
+  if [[ "$WORKSPACE" != /* ]]; then
+    WORKSPACE="$PWD/$WORKSPACE"
+  fi
+  WORKSPACE="${WORKSPACE%/}"
+
+  HQ_PATH="$WORKSPACE/hq"
+  PROJECT_PATH="$HQ_PATH/projects/$PROJECT_NAME"
+  TODAY="$(date '+%Y-%m-%d')"
+
+  # Workspace must exist
+  if [ ! -d "$HQ_PATH" ]; then
+    error "No existing workspace found at: $WORKSPACE"
+    echo "  Run \`bash init.sh\` first to create a workspace, then re-run with --add-project." >&2
+    exit 1
+  fi
+
+  # Project must not already exist
+  if [ -e "$PROJECT_PATH" ]; then
+    error "Project already exists: $PROJECT_PATH"
+    echo "  Choose a different name, or remove the existing project directory." >&2
+    exit 1
+  fi
+
+  # Read CREW_NAME (next_available) and LEAD_NAME from hq/crew.yml
+  CREW_YML="$HQ_PATH/crew.yml"
+  if [ ! -f "$CREW_YML" ]; then
+    error "hq/crew.yml not found at: $CREW_YML"
+    echo "  The workspace looks incomplete. Run \`bash init.sh --upgrade\` to repair." >&2
+    exit 1
+  fi
+
+  # next_available — first line matching "  next_available: <NAME>"
+  CREW_NAME="$(awk '/^[[:space:]]*next_available:/ { print $2; exit }' "$CREW_YML" | tr -d '"' )"
+  if [ -z "$CREW_NAME" ]; then
+    error "Could not read next_available from $CREW_YML"
+    exit 1
+  fi
+
+  # venture_lead.name — first "  name:" within the venture_lead: block
+  LEAD_NAME="$(awk '
+    /^venture_lead:/ { in_block=1; next }
+    in_block && /^[a-zA-Z]/ { in_block=0 }
+    in_block && /^[[:space:]]+name:/ { print $2; exit }
+  ' "$CREW_YML" | tr -d '"')"
+  if [ -z "$LEAD_NAME" ]; then
+    LEAD_NAME="Boss"
+  fi
+
+  info "Workspace:    $WORKSPACE"
+  info "Project:      $PROJECT_NAME"
+  info "Build lead:   $CREW_NAME (assigned from crew.yml next_available)"
+  info "Venture lead: $LEAD_NAME"
+
+  heading "Scaffolding project..."
+
+  PROJECT_TEMPLATES="$TEMPLATES/projects/_per_project"
+  if [ ! -d "$PROJECT_TEMPLATES" ]; then
+    error "Per-project template not found: $PROJECT_TEMPLATES"
+    exit 1
+  fi
+
+  ensure_dir "$PROJECT_PATH"
+  ensure_dir "$PROJECT_PATH/.claude"
+  ensure_dir "$PROJECT_PATH/.claude/skills"
+  ensure_dir "$PROJECT_PATH/runlog"
+  ensure_dir "$PROJECT_PATH/decisions"
+  ensure_dir "$PROJECT_PATH/handovers"
+
+  write_file "$PROJECT_TEMPLATES/.claude/settings.json"  "$PROJECT_PATH/.claude/settings.json"
+  write_file "$PROJECT_TEMPLATES/README.md"              "$PROJECT_PATH/README.md"
+  write_file "$PROJECT_TEMPLATES/STATE.md"               "$PROJECT_PATH/STATE.md"
+  write_file "$PROJECT_TEMPLATES/crew.yml"               "$PROJECT_PATH/crew.yml"
+  write_file "$PROJECT_TEMPLATES/runlog/README.md"       "$PROJECT_PATH/runlog/README.md"
+  write_file "$PROJECT_TEMPLATES/decisions/README.md"    "$PROJECT_PATH/decisions/README.md"
+  write_file "$PROJECT_TEMPLATES/handovers/README.md"    "$PROJECT_PATH/handovers/README.md"
+
+  # Inbox — owned by the inbox-topology spec. Copy any files present in
+  # the per-project inbox template (README, boss.md, etc.) plus standard
+  # legacy type-folders (requests/, processed/).
+  if [ -d "$PROJECT_TEMPLATES/inbox" ]; then
+    ensure_dir "$PROJECT_PATH/inbox"
+    while IFS= read -r -d '' src; do
+      rel="${src#"$PROJECT_TEMPLATES/inbox/"}"
+      dest="$PROJECT_PATH/inbox/$rel"
+      if [[ "$rel" == *.gitkeep ]]; then
+        touch_file "$dest"
+      else
+        write_file "$src" "$dest"
+      fi
+    done < <(find "$PROJECT_TEMPLATES/inbox" -type f -print0)
+  fi
+
+  # Symlink Vibeboss-native skills from HQ
+  if ! $DRY_RUN; then
+    for skill in dev-workflow compact-handover; do
+      if [ -d "$HQ_PATH/skills/$skill" ]; then
+        ln -sfn "$HQ_PATH/skills/$skill" "$PROJECT_PATH/.claude/skills/$skill"
+        info "Symlinked skill: $skill"
+      else
+        warn "HQ skill missing — skipping symlink: $HQ_PATH/skills/$skill"
+      fi
+    done
+  else
+    echo "    [dry-run] would symlink dev-workflow + compact-handover into $PROJECT_PATH/.claude/skills/"
+  fi
+
+  info "Project scaffolded at $PROJECT_PATH"
+
+  cat <<DONE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Project ready
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ${BOLD}${GREEN}✓${RESET} $PROJECT_PATH
+
+  Build lead: $CREW_NAME
+
+  Next steps:
+
+  1. Open a session in the project:
+       cd "$PROJECT_PATH" && claude
+
+  2. From hq/, $LEAD_NAME can dispatch to $CREW_NAME via:
+       $PROJECT_PATH/inbox/
+
+  3. Add $CREW_NAME to hq/crew.yml agents[] when you first spawn them
+     so the runlog/decision records the birth event.
+
+DONE
+
+  if $DRY_RUN; then
+    warn "DRY RUN complete — no files were written."
+  fi
+
+  exit 0
 fi
 
 # ─── Prerequisites check ─────────────────────────────────────────────────────
@@ -147,8 +395,6 @@ fi
 
 # ─── Workspace location ───────────────────────────────────────────────────────
 heading "Workspace location..."
-
-DEFAULT_WORKSPACE="$HOME/ventures/vibeboss-workspace"
 
 if [ -z "$WORKSPACE" ]; then
   if $NONINTERACTIVE; then
@@ -226,67 +472,6 @@ heading "Scaffolding workspace..."
 
 TODAY="$(date '+%Y-%m-%d')"
 HQ_PATH="$WORKSPACE/hq"
-
-# substitute — replaces placeholders in a string
-substitute() {
-  local text="$1"
-  text="${text//\{\{LEAD_NAME\}\}/$LEAD_NAME}"
-  text="${text//\{\{OPERATOR_NAME\}\}/$OPERATOR_NAME}"
-  text="${text//\{\{OPERATOR_EMAIL\}\}/$OPERATOR_EMAIL}"
-  text="${text//\{\{OPERATOR_ADDRESSED_AS\}\}/$OPERATOR_ADDRESSED_AS}"
-  text="${text//\{\{LAB_LEAD_NAME\}\}/$LAB_LEAD_NAME}"
-  text="${text//\{\{WORKSPACE\}\}/$WORKSPACE}"
-  text="${text//\{\{HQ_PATH\}\}/$HQ_PATH}"
-  text="${text//\{\{DATE\}\}/$TODAY}"
-  printf '%s' "$text"
-}
-
-# write_file — write a file from a template, substituting placeholders
-# Usage: write_file <src_template> <dest_path>
-write_file() {
-  local src="$1"
-  local dest="$2"
-
-  if $UPGRADE && [ -f "$dest" ]; then
-    return 0  # skip existing files in upgrade mode
-  fi
-
-  local dest_dir
-  dest_dir="$(dirname "$dest")"
-
-  if $DRY_RUN; then
-    echo "    [dry-run] would write: $dest"
-    return 0
-  fi
-
-  mkdir -p "$dest_dir"
-  local content
-  content="$(cat "$src")"
-  substitute "$content" > "$dest"
-}
-
-# ensure_dir — create a directory (skips in dry-run)
-ensure_dir() {
-  if $DRY_RUN; then
-    echo "    [dry-run] would create dir: $1"
-  else
-    mkdir -p "$1"
-  fi
-}
-
-# touch_file — create an empty file if it doesn't exist
-touch_file() {
-  local dest="$1"
-  if $UPGRADE && [ -f "$dest" ]; then
-    return 0
-  fi
-  if $DRY_RUN; then
-    echo "    [dry-run] would touch: $dest"
-    return 0
-  fi
-  mkdir -p "$(dirname "$dest")"
-  touch "$dest"
-}
 
 # ── HQ skeleton ───────────────────────────────────────────────────────────────
 ensure_dir "$HQ_PATH"

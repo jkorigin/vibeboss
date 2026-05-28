@@ -6,13 +6,30 @@ For what *is* shipped today, see [README.md](README.md#what-ships-today) and [CH
 
 ---
 
+## Recently shipped (v0.2.1)
+
+The Per-Project Skill Bundle (PPSB) arc — every Boss-created project inherits a sane skill bundle, with superpowers as the always-on baseline. See [decisions/2026-05-28-per-project-skill-bundle.md](decisions/2026-05-28-per-project-skill-bundle.md) for the design.
+
+- **STOP-file kill switch.** Drop a `STOP` file at `hq/STOP` or `<workspace>/STOP` to halt cleanly. The boot hook detects either sentinel and emits a HALTED brief; Boss refuses new work until both the file is removed AND the operator re-authorises. Recovery protocol documented in HQ `CLAUDE.md`.
+- **Per-project skill bundle (baseline scaffold + `init.sh --add-project`).** Every Boss-created project ships with a `.claude/settings.json` that pre-enables superpowers and a curated set of Vibeboss-recommended skills. The baseline is per-project (never machine-wide), so reproducibility is preserved across clones.
+- **Recommended companions documented.** README now lists superpowers as the auto-enabled baseline plus the curated opt-in pool from `claude-plugins-official` (context7, code-review, pr-review-toolkit, commit-commands, frontend-design, playwright, hookify, skill-creator, claude-md-management, feature-dev, figma/vercel/firebase/sourcegraph/Notion). gstack stays external (not vendored, install per upstream README).
+- **Bidirectional inbox topology.** HQ holds up+down per-counterparty files for every crew member; projects hold DOWN by default and write UP to HQ's inbox. Disposition-footer convention codifies how each side signals state.
+
 ## Phase 1 — Runtime engine
 
 The autonomous loop. Today's cut is conventions + hooks; Phase 1 turns those into a running system.
 
 - **Bugs that get fixed, not patched.** Reproduce → locate → fix → verify → log. No "fixed!" claims without a verification step. Requires reproducer tooling, a verify gate, and a runlog entry shape that captures the loop.
-- **Don't-stop loops with a kill switch.** Autonomous chain hops via async spawn; drop a STOP file in a known location to halt cleanly. Requires a STOP-file handler in the boot hook and a chain-hop dispatcher.
+- **Don't-stop loops.** Autonomous chain hops via async spawn. The STOP-file half of the kill switch shipped in v0.2.1; the chain-hop dispatcher and don't-stop scheduler land in Phase 1.
 - **Main / Builder / Research separation as real processes.** Today there's Boss plus named crew (build leads, Ginger as research lead). Phase 1 promotes the pattern: the agent that talks to the operator doesn't build — it delegates to a builder, and researches when it's unsure rather than asking. Requires a Main agent identity distinct from build leads, and a "research-first on ambiguity" enforcement path beyond LESSON-003.
+
+## Phase 1.5 — PPSB Phase 2 (v0.3.0)
+
+Finishing the Per-Project Skill Bundle arc once the marketplace pattern is stable.
+
+- **Vibeboss native skill marketplace.** Add `.claude-plugin/marketplace.json` so `vibeboss-natives@vibeboss` resolves the way `superpowers@claude-plugins-official` does today. Currently the natives are file-based (symlinked into projects by `add-project`); the marketplace gives a clean update story and a single install command from anywhere.
+- **`add-project` Boss skill.** Full SKILL.md for Boss with an interactive recommend-menu UX — beyond the CLI baseline shipped in v0.2.1, so the operator gets a guided pick-list when starting a new project.
+- **HQ refactor to use the marketplace.** Once `vibeboss-natives@vibeboss` resolves, HQ's `.claude/settings.json` enables it through `enabledPlugins` rather than relying on file-based symlinks.
 
 ## Phase 2 — Public-repo cut
 

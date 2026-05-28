@@ -9,6 +9,8 @@ This is the canonical "where are we right now" file for Vibeboss. Runlog is hist
 
 ## Current state
 
+<!-- If a STOP file exists at hq/STOP or <workspace>/STOP, all sessions halt. See hq/CLAUDE.md "STOP-file kill switch". -->
+
 Fresh install. {{LEAD_NAME}} is online. No projects yet — tell {{LEAD_NAME}} what you want to build first.
 
 ---

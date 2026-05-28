@@ -1,0 +1,5 @@
+# Vibeboss STOP-file kill switch — existence is the halt signal; never commit.
+/STOP
+/hq/STOP
+/labs/STOP
+/projects/*/STOP
