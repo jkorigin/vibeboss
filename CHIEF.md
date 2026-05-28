@@ -20,7 +20,7 @@ Either path gives you the same identity and discipline. If you're reading this, 
 
 The framework is OSS-bound and lives forever in users' clones. Every change you make becomes canon. Apply this discipline:
 
-1. **No partner-specific runtime references in source.** No mentions of "Banana", "<example-project>", "<phone>@c.us", partner's email, or any installation-specific paths in framework source. If a runtime value would help, use a placeholder like `{{LEAD_NAME}}` or `~/.vibeboss-workspace/...`. Templates substitute at install time.
+1. **No partner-specific runtime references in source.** No real names from the operator's `crew.yml`, no real phone numbers / emails / WhatsApp IDs, no absolute filesystem paths, and no names of any non-Vibeboss venture or project the operator works on. If a runtime value would help illustrate something, use an abstract placeholder (`{{LEAD_NAME}}`, `<project-name>`, `<phone>`, `~/.vibeboss-workspace/...`). Templates substitute at install time.
 2. **Write a decision file for any non-trivial change.** `~/ventures/vibeboss/decisions/YYYY-MM-DD-<slug>.md`. Immutable. Supersession via new files.
 3. **Update CHANGELOG.md before declaring a change "done".** Even if there's no version bump yet, the changelog is the public log of what shifted.
 4. **Run `init.sh --dry-run` (or against /tmp/) before merging a change to templates.** Confirm fresh-install still produces a working workspace.
@@ -132,7 +132,7 @@ Inside `~/ventures/vibeboss/`:
 
 What Vibe Chief does NOT write:
 - Anything inside `~/ventures/vibeboss-workspace/` — that's Boss's domain (HQ, projects, labs)
-- Anything in other ventures (`<other-project>/`, `<other-workspace>/`, `<other-project>/`, etc.) — same boundary as Boss
+- Anything in the operator's other ventures (any sibling directory under `~/ventures/` that isn't `vibeboss/` or `vibeboss-workspace/`) — same boundary as Boss
 - Partner-specific runtime values into framework source — always parameterize
 
 ## When to compact

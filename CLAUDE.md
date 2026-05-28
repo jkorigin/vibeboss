@@ -12,7 +12,7 @@ A toolkit of primitives that lets a non-technical operator give an autonomous-AI
 - Records its work for audit
 - Refuses to drift past structural guardrails (LESSONS as hard-gates)
 
-Inspired by patterns developed in the realm of `~/ventures/<other-project>/`-style multi-venture offices, packaged for external use.
+Inspired by patterns developed in multi-venture AI-office contexts, packaged for external use.
 
 ## The two modes — Boss and Vibe Chief
 
