@@ -54,26 +54,30 @@ For what's planned but not yet built (autonomous loop, verification tooling, Mai
 
 ## Recommended companions
 
-Vibeboss is a memory + workflow harness; the heavy lifting comes from Claude Code skills. By default, every Vibeboss workspace (and every project Boss creates) ships with **superpowers** enabled — Jesse Vincent's MIT-licensed skill collection covering brainstorming, TDD, debugging, parallel-agent dispatch, plans, code review, and more. It's part of Anthropic's official Claude Code marketplace, so it activates automatically on first session.
+Vibeboss is a memory + workflow harness; the heavy lifting comes from Claude Code skills.
 
-Additional skills worth pairing (opt-in, per-project — install with `/plugin install <name>@claude-plugins-official` inside a Claude Code session, or pre-enable in the project's `.claude/settings.json`):
+**Always on (baseline):** every Vibeboss workspace and every Boss-created project ships with **superpowers** enabled — Jesse Vincent's MIT-licensed collection covering brainstorming, TDD, debugging, parallel-agent dispatch, plans, and code review. Part of Anthropic's official Claude Code marketplace, so it activates automatically on first session. Vibeboss's `dev-workflow` skill explicitly invokes superpowers (`brainstorming`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`) — without it, those steps degrade.
 
-- **context7** — live library documentation lookup (better than training-data recall for any current API).
-- **code-review** + **pr-review-toolkit** — pre-merge gates.
-- **commit-commands** — clean commit hygiene.
-- **frontend-design** — UI projects.
-- **playwright** — browser/QA automation.
-- **hookify** — Claude Code hook tooling.
-- **skill-creator** — write your own skills.
-- **claude-md-management** — keep CLAUDE.md current.
-- **feature-dev** — feature scaffolding.
-- **figma** / **vercel** / **firebase** / **sourcegraph** / **Notion** — service-specific integrations.
+**Worth adding — curated to three.** Install per project with `/plugin install <name>@claude-plugins-official` inside a Claude Code session, or pre-enable in the project's `.claude/settings.json`:
 
-External (not in Anthropic's marketplace yet, install per upstream README):
+- **context7** — live library documentation lookup. Better than training-data recall for any current API. Useful in nearly every project.
+- **playwright** — browser-based QA. Essential the moment your project touches a web UI.
+- **skill-creator** — supports writing your own skills (the "custom" class of the PPSB architecture). Worth having once you start codifying your own patterns.
 
-- **gstack** ([garrytan/gstack](https://github.com/garrytan/gstack)) — Garry Tan's 40+ skill bundle covering planning, design, QA, deploy, and docs. Requires Bun. Install: `git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack && cd ~/.claude/skills/gstack && ./setup`. Adds skills machine-wide; note that it writes to `~/.gstack/`.
+**Deliberately not recommended** (in case you wonder why):
 
-Vibeboss never auto-clones these. The point is to make the install path one click for any operator who wants them.
+- `code-review` / `pr-review-toolkit` — superpowers already includes `requesting-code-review`.
+- `commit-commands` — Claude Code handles git fine without a specialized skill.
+- `hookify` — for *authoring* Claude Code hooks. Vibeboss ships its hooks; users don't write them.
+- `claude-md-management` — risks conflict with Vibeboss's own CLAUDE.md templates.
+- `feature-dev` — duplicates Vibeboss's `dev-workflow` skill.
+- `frontend-design`, `figma`, `vercel`, `firebase`, `sourcegraph`, `Notion`, other service-specific integrations — install when the project actually needs them. A Vercel-deployed Next.js project should add `vercel` and `frontend-design`; a CLI tool shouldn't.
+
+**External — reference, not a recommendation:**
+
+- **gstack** ([garrytan/gstack](https://github.com/garrytan/gstack)) — Garry Tan's 40+ skill bundle. Comprehensive but heavy: installs machine-wide under `~/.claude/skills/gstack/`, requires Bun, writes to `~/.gstack/`. Worth a look if Vibeboss's curated set feels too thin. Install per upstream README.
+
+Vibeboss never auto-clones any of these.
 
 ## What this will NOT be
 

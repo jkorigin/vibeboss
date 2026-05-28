@@ -25,7 +25,7 @@ Adopt the **Per-Project Skill Bundle (PPSB)** architecture. Three skill classes,
 |---|---|---|---|
 | **Baseline (always on)** | Pre-enabled in every workspace's `.claude/settings.json` `enabledPlugins` | HQ + every Boss-created project | `superpowers@claude-plugins-official` |
 | **Vibeboss-packaged natives** | Bundled in `templates/`, file-based in v0.2.1; will migrate to a Vibeboss marketplace in v0.3.0 | HQ + Boss-created projects | `dev-workflow`, `compact-handover` |
-| **Vibeboss-recommended** | Opt-in per project; documented in README; one-command install via `/plugin install <name>@claude-plugins-official` | Per project | `context7`, `code-review`, `pr-review-toolkit`, `commit-commands`, `frontend-design`, `playwright`, `hookify`, `skill-creator`, `claude-md-management`, `feature-dev`, service integrations |
+| **Vibeboss-recommended** | Opt-in per project; documented in README with explicit rationale; one-command install via `/plugin install <name>@claude-plugins-official` | Per project | Critically curated to three: `context7` (live API docs), `playwright` (web QA), `skill-creator` (custom-class enablement). See README's "Deliberately not recommended" block for the why-not list — superpowers already covers `code-review`, `hookify` is for hook authors not users, `feature-dev` duplicates `dev-workflow`, service-specific skills get added per-project as needed. |
 | **User-custom** | Operator-authored, lives under the project's `.claude/skills/` | Per project | Anything the operator writes |
 
 External skills (notably `gstack`) are recommended in the README but never vendored, never auto-installed, and never added to a Vibeboss marketplace. The README points at their canonical upstream.
