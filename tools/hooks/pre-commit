@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# tools/hooks/pre-commit — Vibeboss sensitivity audit gate.
+#
+# Installed into .git/hooks/pre-commit by tools/install-hooks.sh.
+# Fires before every commit. Calls tools/audit/audit.sh in --staged mode
+# (scans only what's about to land). If the audit finds sensitive shapes,
+# the commit is blocked with exit 1.
+#
+# Bypass (only when you genuinely need to commit a false positive that
+# can't be allowlisted cleanly):
+#
+#     git commit --no-verify ...
+#
+# Don't bypass casually — that's how the leaks accumulated last time.
+# Prefer adding a regex to tools/audit/allowlist.txt over --no-verify.
+
+set -uo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$REPO_ROOT" ]; then
+  echo "pre-commit: not inside a git repo; skipping audit" >&2
+  exit 0
+fi
+
+AUDIT="$REPO_ROOT/tools/audit/audit.sh"
+if [ ! -x "$AUDIT" ]; then
+  # Audit script missing or not executable — log + allow, don't block on a setup issue
+  echo "pre-commit: tools/audit/audit.sh missing or not executable; skipping audit" >&2
+  exit 0
+fi
+
+# Run the audit in staged mode. It exits 1 if findings, 0 if clean.
+"$AUDIT" --staged
+EXIT_CODE=$?
+
+if [ "$EXIT_CODE" -ne 0 ]; then
+  echo ""
+  echo "pre-commit: commit BLOCKED by sensitivity audit (see above)."
+  echo "  - To allowlist a false positive: edit tools/audit/allowlist.txt"
+  echo "  - To bypass once (NOT recommended): git commit --no-verify"
+fi
+
+exit "$EXIT_CODE"

@@ -6,6 +6,16 @@ For what *is* shipped today, see [README.md](README.md#what-ships-today) and [CH
 
 ---
 
+## Recently shipped (v0.2.7)
+
+Sensitivity-audit mechanism + comprehensive pre-public security scrub. From this version forward, every commit + every push is gated against personal/sensitive data leaks by a shape-based detector. See [decisions/2026-05-28-sensitivity-audit-mechanism.md](decisions/2026-05-28-sensitivity-audit-mechanism.md).
+
+- **`tools/audit/audit.sh`** shape-based detector (phone shapes, WhatsApp/LID IDs, absolute user paths, cross-venture refs, unallowlisted emails, API-key shapes, credential assignments).
+- **`tools/audit/allowlist.txt`** regex allowlist — patterns only, never literal sensitive data.
+- **`tools/hooks/pre-commit`** + **`tools/install-hooks.sh`** — pre-commit hook + idempotent installer.
+- **`.github/workflows/ci.yml` `sensitivity-audit` job** + **`tests/audit-smoke.sh`** — CI gate. Unbypassable.
+- **Comprehensive pre-public scrub** that motivated the mechanism: 3 leak-heavy files deleted from HEAD + all history via `git-filter-repo`, cross-venture identifiers redacted across every commit, real name → `jkorigin`, Apache 2.0 copyright holder updated.
+
 ## Recently shipped (v0.2.6)
 
 PreCompact handover mechanism — supersedes v0.2.4's Stop-hook design which failed the keyword-test acceptance gate same-day it shipped. Boss diagnosed the failure modes, designed + verified the replacement live, filed the port spec via the v0.2.3 framework-feedback channel; Vibe Chief ported into canon. See [decisions/2026-05-28-precompact-handover-mechanism.md](decisions/2026-05-28-precompact-handover-mechanism.md).

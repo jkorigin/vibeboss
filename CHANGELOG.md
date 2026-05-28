@@ -2,7 +2,43 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
-## [unreleased] — v0.2.6 in progress — PreCompact handover mechanism (2026-05-28)
+## [unreleased] — v0.2.7 in progress — Sensitivity-audit mechanism + pre-public security pass (2026-05-28)
+
+Three-layer mechanism so every future commit + push is gated against personal/sensitive data leaks. Also consolidates the comprehensive pre-public security scrub (HEAD + git-filter-repo history rewrite) that motivated the mechanism.
+
+### Added
+
+- **`tools/audit/audit.sh`** — shape-based sensitivity detector. Modes: `--tree` (default, scans all tracked files), `--staged` (only git-staged content; pre-commit hook uses this), `--history` (forensic scan across `git log -p`). Catches phone-or-id shapes, phone-shaped digit runs, absolute user paths, cross-venture paths, unallowlisted emails, API-key shapes (Anthropic/OpenAI/GitHub/AWS/Slack/Bearer), credential assignments.
+- **`tools/audit/allowlist.txt`** — regex allowlist of known-OK patterns (e.g. `noreply@anthropic\.com`, `@test\.local`, `\{\{[A-Z_]+\}\}`). **Critically: patterns only, never literal sensitive data** — that's the failure mode that motivated this layer.
+- **`tools/audit/README.md`** — documents categories, allowlist discipline, three-layer enforcement, why-shape-not-token, known limits.
+- **`tools/hooks/pre-commit`** + **`tools/install-hooks.sh`** — pre-commit git hook that runs `audit.sh --staged`. Blocks commits on findings. Idempotent installer with `--check` mode. Run `bash tools/install-hooks.sh` once after clone.
+- **`tests/audit-smoke.sh`** + **`.github/workflows/ci.yml` `sensitivity-audit` job** — CI gate. Runs `audit.sh --tree` on every push and PR. **Unbypassable** — `--no-verify` skips pre-commit locally, but CI catches it before merge.
+- `decisions/2026-05-28-sensitivity-audit-mechanism.md` — full decision documenting the three-layer architecture, the shape-vs-token discipline, calibration to the v0.2.6 manual-scrub effort, and the limits (regex blind spots, commit-message scanning gap, history-mode slowness).
+
+### Pre-public security scrub (consolidated)
+
+Before building the mechanism, a comprehensive manual scrub fixed leaks the discipline-based audits had missed across HEAD + git history:
+
+- **Three leak-heavy files deleted from HEAD and from ALL git history** via `git-filter-repo --invert-paths`: the partner-data-audit decision (circular-leak — documented redactions by quoting them), the portable-hook-paths decision (described the bad commit path by quoting it), the topology-hq-split migration plan (full of absolute paths + cross-venture refs).
+- **`git-filter-repo --replace-text` rewrote every commit** (file content + commit messages) replacing real name → `jkorigin`, real phone → `<phone>`, real WhatsApp IDs → `<whatsapp-id>`, real email → `<operator-email>`, `~/` paths → `~/`, other-venture paths → `~/ventures/<other-project>/` etc, cross-venture content references → abstract placeholders.
+- **CHIEF.md discipline rule rewritten** to abstract the rule without enumerating forbidden identifiers as examples (the previous version listed real identifiers as "what NOT to include").
+- **`docs/superpowers/` → `docs/design/`** rename to eliminate naming collision with the external `obra/superpowers` project (SHAs updated post-rewrite).
+- **External-skills audit pass** confirming all third-party skills (superpowers, gstack, all `claude-plugins-official` plugins) are framed as external — Vibeboss never forks/vendors/maintains them; just activates via plugin manifest with proper upstream attribution.
+- **Apache 2.0 copyright holder** changed from real legal name to `jkorigin` (GitHub handle) — preserves enforcement standing via GitHub-account-control, removes doxxing surface.
+- **Force-push to `origin/main`** after history rewrite. All previously-pushed commit SHAs invalidated; the rewritten history is the new canonical timeline. Stale SHA references in canon updated to new post-rewrite SHAs.
+
+### Changed
+
+- **`VERSION`** bumped to `0.2.7-dev`.
+- **`ROADMAP.md`** gains "Recently shipped (v0.2.7)" section.
+
+### Deferred (v0.3.0+)
+
+- **Workspace-side sensitivity audit** — `init.sh --add-project` could install equivalent pre-commit hooks into Boss-created git repos. Out of scope for v0.2.7; framework source first.
+- **Commit-message scanning in pre-commit and CI** — currently only `--history` mode covers commit-message bodies. A pre-commit-msg hook would close this gap.
+- **JSON-structured findings output** for tooling integration.
+
+## [v0.2.6] — 2026-05-28 — PreCompact handover mechanism
 
 The v0.2.4 Stop-hook compact-handover design failed the keyword-test acceptance gate on the very same day it shipped. Boss in the live HQ session diagnosed three compounding failure modes, switched to a PreCompact-hook design with pinned/rolling separation, and **passed live** — partner triggered `/compact`, post-compact session led with the keyword verbatim. Boss filed the port spec through the framework-feedback channel (the channel I designed in v0.2.3 — used end-to-end for the first time). This ship ports the verified-live mechanism into framework canon.
 
