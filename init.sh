@@ -318,6 +318,26 @@ updated_at: $now
 EOF
 }
 
+# record_workspace_in_source — append $WORKSPACE to $SCRIPT_DIR/.workspaces if
+# not already present. Tracks every workspace scaffolded/touched by this source
+# tree so Vibe Chief (framework-dev mode) can globs the list and check each for
+# framework-level feedback. Gitignored. Idempotent.
+record_workspace_in_source() {
+  local source_workspaces="$SCRIPT_DIR/.workspaces"
+  if [ -z "${WORKSPACE:-}" ]; then
+    return 0
+  fi
+  # de-dupe: skip if path already there
+  if [ -f "$source_workspaces" ] && grep -qxF "$WORKSPACE" "$source_workspaces" 2>/dev/null; then
+    return 0
+  fi
+  if $DRY_RUN; then
+    echo "    [dry-run] would record workspace in $source_workspaces"
+    return 0
+  fi
+  echo "$WORKSPACE" >> "$source_workspaces"
+}
+
 # ensure_dir — create a directory (skips in dry-run)
 ensure_dir() {
   if $DRY_RUN; then
@@ -468,6 +488,11 @@ if $ADD_PROJECT_MODE; then
   fi
 
   info "Project scaffolded at $PROJECT_PATH"
+
+  # Record this workspace in the source-side registry (idempotent — only appends
+  # if not already there). Lets Vibe Chief discover every workspace this source
+  # has touched.
+  record_workspace_in_source
 
   cat <<DONE
 
@@ -782,6 +807,11 @@ PROMPT
   # ── Update version metadata ─────────────────────────────────────────────────
   write_version_metadata
 
+  # ── Record this workspace in the source-side registry ───────────────────────
+  # Backfills the registry for any workspace registered before this feature
+  # existed. Idempotent — skips if already listed.
+  record_workspace_in_source
+
   # ── Summary ─────────────────────────────────────────────────────────────────
   cat <<SUMMARY
 
@@ -925,6 +955,9 @@ ensure_dir "$HQ_PATH/runlog"
 ensure_dir "$HQ_PATH/decisions"
 ensure_dir "$HQ_PATH/handovers"
 ensure_dir "$HQ_PATH/follow-ups"
+ensure_dir "$HQ_PATH/follow-ups/framework"
+ensure_dir "$HQ_PATH/follow-ups/framework/processed"
+ensure_dir "$HQ_PATH/calibration"
 ensure_dir "$HQ_PATH/secrets"
 ensure_dir "$HQ_PATH/projects"
 
@@ -942,6 +975,9 @@ write_file "$TEMPLATES/hq/runlog/README.md"                   "$HQ_PATH/runlog/R
 write_file "$TEMPLATES/hq/decisions/README.md"                "$HQ_PATH/decisions/README.md"
 write_file "$TEMPLATES/hq/handovers/README.md"                "$HQ_PATH/handovers/README.md"
 write_file "$TEMPLATES/hq/follow-ups/README.md"               "$HQ_PATH/follow-ups/README.md"
+write_file "$TEMPLATES/hq/follow-ups/framework/README.md"     "$HQ_PATH/follow-ups/framework/README.md"
+write_file "$TEMPLATES/hq/calibration/README.md"              "$HQ_PATH/calibration/README.md"
+write_file "$TEMPLATES/hq/calibration/log.jsonl"              "$HQ_PATH/calibration/log.jsonl"
 write_file "$TEMPLATES/hq/inbox/README.md"                    "$HQ_PATH/inbox/README.md"
 write_file "$TEMPLATES/hq/secrets/README.md"                  "$HQ_PATH/secrets/README.md"
 write_file "$TEMPLATES/hq/secrets/.gitignore"                 "$HQ_PATH/secrets/.gitignore"
@@ -951,6 +987,8 @@ touch_file "$HQ_PATH/inbox/requests/.gitkeep"
 touch_file "$HQ_PATH/inbox/chats/.gitkeep"
 touch_file "$HQ_PATH/inbox/todos/.gitkeep"
 touch_file "$HQ_PATH/inbox/processed/.gitkeep"
+touch_file "$HQ_PATH/follow-ups/framework/.gitkeep"
+touch_file "$HQ_PATH/follow-ups/framework/processed/.gitkeep"
 
 info "HQ scaffolded at $HQ_PATH"
 
@@ -1025,6 +1063,12 @@ fi
 # Pin the workspace to the source version + sha so future --update runs know
 # where they started from.
 write_version_metadata
+
+# ─── Workspace registry ──────────────────────────────────────────────────────
+# Record this workspace in the source-side registry so Vibe Chief (framework-dev
+# mode) can find every workspace this source has scaffolded and check each for
+# framework-level feedback. Idempotent.
+record_workspace_in_source
 
 # ─── Success block ────────────────────────────────────────────────────────────
 cat <<SUCCESS

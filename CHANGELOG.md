@@ -2,6 +2,40 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
+## [unreleased] — v0.2.3 in progress — Discipline at the seams (2026-05-28)
+
+Three discipline shifts at the seams between Boss, Vibe Chief, and the operator: first-response output is now imperative (closes the "Boss didn't auto-boot on 'hi'" gap), Boss has a sanctioned channel to surface framework observations back to Vibe Chief, and all numerical claims must cite their source or label as guess. See `decisions/2026-05-28-feedback-channel-and-calibration.md` for the architecture.
+
+### Added
+
+- **LESSON-007 — First-response output discipline.** On the FIRST response of every new session, output the boot brief from `additionalContext` as the lead of the reply — regardless of what the operator says. Imperative section at the top of `templates/hq/CLAUDE.md`, mirrored in `templates/projects/_per_project/README.md` for project build leads, and in `CHIEF.md` (Vibe Chief's discipline applies too). Closes the "Boss didn't auto-boot when I said hi" failure mode where the SessionStart hook fires correctly but the model treats `additionalContext` as ambient context rather than as an act-on-this instruction.
+- **LESSON-008 — No bare claims; cite provenance or tag as guess.** New hard-gate rule: every numerical or quantitative claim cites its source (grep the calibration log for time estimates; run the count for file counts; cite measurements for percentages) — or prefixes the number with `guess:` and italic-formats it. Documented in `templates/hq/lessons.md` and reinforced in CLAUDE.md and CHIEF.md.
+- **Framework feedback channel (Boss → Vibe Chief).** New directory `templates/hq/follow-ups/framework/` with README documenting the channel, `.gitkeep`, and `processed/` subfolder. Boss writes here when partner reports framework issues (e.g. "auto-boot didn't fire") or when Boss notices a canon-level gap. Filename: `YYYY-MM-DD-<slug>.md`. Body: problem statement, reproducer, Boss's local workaround, suggested fix. After Vibe Chief addresses the item, disposition-footer protocol (from v0.2.1) closes the loop and the file moves to `processed/`.
+- **`vibeboss/.workspaces` tracker.** New gitignored file at source root. `init.sh` appends the workspace's absolute path on every fresh install, `--upgrade`, `--update`, and `--add-project` (with dedup). Vibe Chief's boot sequence (per the new `## Read workspace framework feedback` section in `CHIEF.md`) globs this file and reads each workspace's `follow-ups/framework/` directory to surface pending items.
+- **Calibration log infrastructure.** Two new JSON Lines logs:
+  - `templates/hq/calibration/log.jsonl` — empty initial file scaffolded into every new workspace; Boss appends entries when work completes.
+  - `vibeboss/calibration/log.jsonl` — at source root; Vibe Chief appends for framework work. Seeded with three retroactive entries reconstructing wall-clock for v0.2.0 (~25 min), v0.2.1 (~30 min), and v0.2.2 (~20 min) from this session's git history. Tagged with coarse categories (`subagent-cluster`, `templates`, `bash`, `audit`, `ppsb`, `update-mechanism`).
+  - Both come with `calibration/README.md` documenting the schema (required: `date` / `task` / `scope` / `tags` / `wallclock_min`; optional: `subagents` / `files` / `human_est_min` / `notes`) and the discipline (append-only; grep for ≥3 entries with overlapping tags; report median + range + sample size, or label as guess if <3 matches).
+- `decisions/2026-05-28-feedback-channel-and-calibration.md` — documents the three-shift architecture, why one channel for feedback rather than many, why JSON Lines for calibration, the retroactive seeding rationale, and the limits (single-channel, model-behavior contract for first-response, small-N calibration).
+- `migrations/v0.2.2-dev-to-v0.2.3-dev.sh` — backfills `hq/follow-ups/framework/` and `hq/calibration/` directories + registers the workspace in `vibeboss/.workspaces` for legacy installs running `init.sh --update`.
+- Smoke test extended (`tests/init-smoke.sh`): verifies framework-feedback dir exists with proper README content, calibration log + README exist with LESSON-008 reference, `.workspaces` tracker records the temp workspace (and cleans up after itself), LESSON-007 + LESSON-008 are in `lessons.md`, first-response discipline section is in CLAUDE.md, migration script is executable.
+
+### Changed
+
+- **`templates/hq/CLAUDE.md`** — new `## First-response discipline` section at the top (between intro and Boot sequence) with imperative language; new `## Estimate honesty + claim provenance` section near Boundaries pointing at the calibration log and LESSON-008.
+- **`templates/projects/_per_project/README.md`** — first-response discipline applied to project build leads.
+- **`CHIEF.md`** — new discipline bullet 6 (first-response applies to Vibe Chief too); new `## Read workspace framework feedback` section in boot sequence pointing at `vibeboss/.workspaces` + each workspace's `follow-ups/framework/`; new `## Estimate honesty + claim provenance` section pointing at `vibeboss/calibration/log.jsonl`.
+- **`templates/hq/lessons.md`** — LESSON-007 and LESSON-008 appended (matching the LESSON-001 through LESSON-006 format).
+- **`init.sh`** — scaffolds the new `hq/follow-ups/framework/` and `hq/calibration/` directories on fresh install; writes their README.md + log.jsonl from new templates; records the workspace in `<source>/.workspaces` (with dedup) on every install / `--upgrade` / `--update` / `--add-project`.
+- **`.gitignore`** — added `.workspaces` entry with rationale comment.
+- **`VERSION`** bumped to `0.2.3-dev`.
+- **`ROADMAP.md`** — "Recently shipped (v0.2.3)" section added above v0.2.2.
+
+### Deferred (v0.3.0+)
+
+- **A categorize-feedback skill or LESSON-009** if Boss starts misrouting issues between `STATE.md` / runlog / decisions / `follow-ups/framework/`. Current heuristic relies on Boss recognizing "this is framework-level" — could drift.
+- **Automated calibration analysis** — a `vibeboss estimate <tag1>,<tag2>` helper that greps the log, computes median + range + n, and outputs the formatted citation. Today Boss does it inline via grep + manual median; a helper would make LESSON-008 cheaper to follow.
+
 ## [unreleased] — v0.2.2 in progress — Update mechanism (2026-05-28)
 
 Vibeboss workspaces can now receive framework updates safely. Per-workspace version pinning + per-file installed-original hashes let `init.sh --update` distinguish between files the user customized and files that still match the canonical install — refreshing the latter, prompting on the former. Boss surfaces a banner in the boot brief when updates are available.

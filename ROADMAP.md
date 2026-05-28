@@ -6,6 +6,15 @@ For what *is* shipped today, see [README.md](README.md#what-ships-today) and [CH
 
 ---
 
+## Recently shipped (v0.2.3)
+
+Three discipline shifts at the seams: Boss now outputs the boot brief proactively, has a sanctioned channel back to Vibe Chief for framework-level observations, and all numerical claims are now provenance-tagged. See [decisions/2026-05-28-feedback-channel-and-calibration.md](decisions/2026-05-28-feedback-channel-and-calibration.md).
+
+- **First-response discipline (LESSON-007).** Boss + project build leads now output the boot brief as their FIRST response in every new session, regardless of what the operator says ("hi", a direct task, silence — brief comes first). Imperative language in `templates/hq/CLAUDE.md`, `templates/projects/_per_project/README.md`, and `CHIEF.md`. Closes the "auto-boot didn't fire when I said hi" failure mode observed in practice.
+- **Framework feedback channel (Boss → Vibe Chief).** New `hq/follow-ups/framework/` directory in every workspace. Boss writes framework-level observations here when partner reports framework issues or Boss notices canon-level gaps. Vibe Chief reads each workspace's directory on every reno boot via the new `vibeboss/.workspaces` tracker (gitignored; `init.sh` writes the workspace path on every install / `--upgrade` / `--update` / `--add-project`). Disposition-footer protocol from v0.2.1 closes the loop; addressed items move to `processed/`.
+- **Calibration log + claim-provenance discipline (LESSON-008).** Two new JSON Lines logs (`<workspace>/hq/calibration/log.jsonl` for Boss work, `<vibeboss>/calibration/log.jsonl` for Vibe Chief framework work). Schema in `calibration/README.md`. LESSON-008 requires every numerical claim to cite source (grep the log for time estimates; run the count for file counts; cite the measurement for percentages) — or label as `guess:` with italics. Source-side calibration log seeded with retroactive entries for v0.2.0 / v0.2.1 / v0.2.2 from this session's git history (n=3 baseline).
+- **Migration `v0.2.2-dev-to-v0.2.3-dev`** backfills both directories + registers the workspace for legacy installs.
+
 ## Recently shipped (v0.2.2)
 
 Update mechanism — running workspaces can now receive framework updates safely. See [decisions/2026-05-28-update-mechanism.md](decisions/2026-05-28-update-mechanism.md) for the design.

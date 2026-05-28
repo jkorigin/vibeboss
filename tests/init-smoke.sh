@@ -260,6 +260,52 @@ if printf '%s' "$POSTUPDATE_OUT" | grep -q "Vibeboss update available"; then
   fail "boot.sh still emits update banner after successful --update"
 fi
 
+# ─── v0.2.3: framework feedback channel + calibration log + .workspaces ──────
+echo "Testing v0.2.3 infrastructure (feedback / calibration / .workspaces)..."
+
+# Framework feedback channel
+check_file "$TMPWS/hq/follow-ups/framework/README.md"
+if [ ! -d "$TMPWS/hq/follow-ups/framework/processed" ]; then
+  fail "missing directory: hq/follow-ups/framework/processed/"
+fi
+if ! grep -q "Boss → Vibe Chief" "$TMPWS/hq/follow-ups/framework/README.md" 2>/dev/null; then
+  fail "follow-ups/framework/README.md missing 'Boss → Vibe Chief' header content"
+fi
+
+# Calibration log
+check_file "$TMPWS/hq/calibration/README.md"
+check_file "$TMPWS/hq/calibration/log.jsonl"
+if ! grep -q "LESSON-008" "$TMPWS/hq/calibration/README.md" 2>/dev/null; then
+  fail "calibration/README.md missing reference to LESSON-008"
+fi
+
+# .workspaces tracking — source recorded the temp workspace
+if ! grep -qxF "$TMPWS" "$REPO_DIR/.workspaces" 2>/dev/null; then
+  fail "source .workspaces did not record temp workspace path"
+else
+  # Clean up our entry so subsequent runs don't accumulate
+  grep -vxF "$TMPWS" "$REPO_DIR/.workspaces" > "$REPO_DIR/.workspaces.tmp" 2>/dev/null || true
+  mv "$REPO_DIR/.workspaces.tmp" "$REPO_DIR/.workspaces" 2>/dev/null || true
+fi
+
+# LESSON-007 + LESSON-008 in lessons.md
+if ! grep -q "LESSON-007" "$TMPWS/hq/lessons.md" 2>/dev/null; then
+  fail "hq/lessons.md missing LESSON-007"
+fi
+if ! grep -q "LESSON-008" "$TMPWS/hq/lessons.md" 2>/dev/null; then
+  fail "hq/lessons.md missing LESSON-008"
+fi
+
+# First-response discipline in CLAUDE.md
+if ! grep -q "First-response discipline\|first-response" "$TMPWS/hq/CLAUDE.md" 2>/dev/null; then
+  fail "hq/CLAUDE.md missing first-response discipline section"
+fi
+
+# Migration v0.2.2-dev-to-v0.2.3-dev.sh exists and is executable
+if [ ! -x "$REPO_DIR/migrations/v0.2.2-dev-to-v0.2.3-dev.sh" ]; then
+  fail "missing or non-executable: migrations/v0.2.2-dev-to-v0.2.3-dev.sh"
+fi
+
 # ─── Report ──────────────────────────────────────────────────────────────────
 if [ "${#FAILURES[@]}" -gt 0 ]; then
   echo ""

@@ -25,3 +25,6 @@
 *.log
 tmp/
 .cache/
+
+# Runtime tracking — list of workspaces this source has scaffolded (machine-specific, never canon).
+.workspaces

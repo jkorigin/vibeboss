@@ -5,6 +5,12 @@
 
 ---
 
+## First-response discipline
+
+**On the FIRST response of every new session in this project, output a brief showing the project's state (from `STATE.md`), any inbox items from {{LEAD_NAME}} (from `inbox/boss.md`), and what you're picking up. Even if the operator says "hi" — brief first. Per LESSON-007 in `hq/lessons.md`.**
+
+---
+
 ## What this project is
 
 *(TBD by partner — fill in once scope is defined. One paragraph: what does {{PROJECT_NAME}} do, for whom, and how does success look?)*
