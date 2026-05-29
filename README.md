@@ -1,18 +1,21 @@
 # Vibeboss
 
-**Give your AI a memory.**
+**One AI lead for all your projects.**
 
-Vibeboss is a setup pack for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (and Codex) that turns each blank AI session into a workspace that already knows your project — where things stand, what's been decided, which mistakes to avoid, and what's waiting in your inbox. You talk to it in plain language; it keeps the structure, so nothing drifts or gets forgotten between sessions.
+Most AI coding tools give you a single assistant in a single chat. Vibeboss gives you **Boss** — an AI venture lead who runs your whole operation. Boss assigns a dedicated build lead to each project, routes hard questions to a standing research lab, and remembers every decision and lesson across sessions — surfacing only the calls that genuinely need you. You set the direction; Boss orchestrates the rest.
 
-**What's here today** — the memory + discipline layer:
+It's a setup pack for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (and Codex): you talk in plain language, and the structure — multiple projects, a named crew, a research lab, durable memory — is kept for you.
 
-- a one-command installer (`init.sh`) that scaffolds your workspace
-- auto-boot hooks for Claude Code and Codex, so every session loads your context *before* the first message
-- the file conventions that keep the AI grounded: project state, an append-only work log, immutable decision records, lessons captured from your corrections, and an inbox for tasks
+**What's here today** — the orchestration structure + memory layer:
 
-**What's not here yet** — a fully autonomous, runs-on-its-own engine. That's Phase 1; see [ROADMAP.md](ROADMAP.md).
+- **Boss + crew** — one lead you talk to; each project gets its own named build lead, dispatched by Boss (async via an inbox, or as a live working session)
+- **A research lab** — a standing research function Boss routes hard questions to; findings come back with cited sources and a confidence rating, not guesses
+- **Memory that survives every session** — project state, an append-only work log, immutable decision records, and lessons captured from your corrections
+- **Auto-boot** — every session loads its full context *before* the first message; one command (`init.sh`) sets the whole workspace up
 
-> *Skip permissions, approve all, goodnight* — the dream of handing an AI a goal and walking away. Vibeboss aims to make that safe: no drift, memory of every mistake, surfacing only when it genuinely needs you. Today's release delivers the memory and discipline that make it possible; the don't-stop loop and verification tooling arrive in Phase 1.
+**What's not here yet** — the fully autonomous, runs-all-night-on-its-own loop (with verification tooling and a kill switch). That's Phase 1; see [ROADMAP.md](ROADMAP.md).
+
+> *Skip permissions, approve all, goodnight* — set the direction, then walk away. That's the goal: no drift, memory of every mistake, surfacing only when it genuinely needs you. Today's release delivers the orchestration structure and memory that make it possible; the don't-stop loop arrives in Phase 1.
 
 ## Quick Start
 
