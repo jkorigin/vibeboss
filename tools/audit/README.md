@@ -26,6 +26,20 @@ The audit detects *shapes*, not specific data — the audit file itself must nev
 
 False-positives go in `tools/audit/allowlist.txt` — one regex per line. The list intentionally allowlists *patterns* (e.g., `@test\.local`, `\{\{[A-Z_]+\}\}`), not literal sensitive data.
 
+## Denylist (the shapeless-leak catch)
+
+The shape-based detector has a known blind spot (see Limits): a bare runtime-specific word — another venture's project name, a crew name borrowed from a different operation, an internal codename — has **no detectable shape**. It reads like ordinary prose. Yet it's exactly the kind of literal that leaks toward source through the framework-feedback channel (runtime data flows source-ward every loop iteration when Boss files an issue that Vibe Chief then fixes).
+
+The denylist closes that vector:
+
+- Lives at `<repo>/.vibeboss-denylist`, **gitignored** — it contains the very terms it protects against, so it must never be committed. This is the deliberate inversion of the "never embed literals" rule below: the literals are allowed to exist *only* in a file git will never track.
+- One literal term per line; `#` comments and blank lines ignored. Sanctioned illustrative names (the produce-theme defaults like Banana / Carrot / Ginger) are explicitly **excluded** — they're meant to ship.
+- A denylist hit **bypasses the allowlist** — a denylist term is definitionally a leak, no false-positive escape hatch.
+- Matched case-insensitively as a fixed string (`grep -niFf`) in both `--tree`/`--staged` (file content) and `--history` (full log dump).
+- **Local-only gate.** The file is present on the operator's machine (where the pre-commit hook that matters runs) and absent in CI (CI checks out the repo without the gitignored file). CI therefore does shape-detection only; the denylist is the operator's local belt-and-suspenders.
+
+To add a term: append it to `.vibeboss-denylist` locally. Never reference the literal in any tracked file (commit message, CHANGELOG, decision) — describe the *category* ("a residual crew name", "another venture's codename"), never the value. That's the same circular-leak discipline as everything else here.
+
 ## How this gets enforced
 
 Three layers:
@@ -43,7 +57,8 @@ If a new category of sensitive data appears (e.g., a new social-media handle for
 ## Limits
 
 - **False positives are real.** A legitimate use of a 10-digit number (e.g., a Unix timestamp in test data) may flag. Add an allowlist entry.
-- **Doesn't catch novel patterns.** The audit knows the shapes it was taught. A truly creative leak (e.g., a real name embedded inside a placeholder, like `{{Name}}`) wouldn't trigger. Stay vigilant on PRs.
+- **Doesn't catch novel patterns.** The audit knows the shapes it was taught. A truly creative leak (e.g., a real name embedded inside a placeholder) wouldn't trigger. Stay vigilant on PRs.
+- **Shapeless bare words** (another venture's project name, a borrowed crew name, an internal codename) have no detectable shape and slip past every regex above. The **denylist** (see above) is the dedicated mitigation — a local gitignored literal list checked alongside the shape detector.
 - **History mode is slow** — runs through the entire `git log -p` output. Use sparingly.
 - **No commit-message scanning by default.** The current detector reads file content; commit messages are handled separately by the `--history` mode. Tighten if needed.
 

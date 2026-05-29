@@ -28,3 +28,6 @@ tmp/
 
 # Runtime tracking — list of workspaces this source has scaffolded (machine-specific, never canon).
 .workspaces
+
+# Sensitivity denylist — local-only literal runtime terms (contains the data it protects; never commit)
+.vibeboss-denylist

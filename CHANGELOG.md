@@ -2,7 +2,28 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
-## [unreleased] — v0.3.1 in progress — Boss runtime-audit fixes (labs methodology + spawn template) (2026-05-29)
+## [unreleased] — v0.3.2 in progress — denylist closes the framework-feedback leak vector (2026-05-29)
+
+The sensitivity audit (v0.2.7) detects *shapes* — phone IDs, absolute user paths, emails, credential tokens. But the framework-feedback channel (v0.2.3) means runtime data flows *toward* source on every loop iteration: Boss files an issue from the live workspace, Vibe Chief reads it and ports the fix into canon. That path can carry **shapeless** literals — another venture's project name, a crew name borrowed from a different operation, an internal codename — which read like ordinary prose and slip past every shape-based pattern. This version closes that vector.
+
+### Added
+
+- **Denylist — shapeless-leak catch for the audit.** New gitignored `<repo>/.vibeboss-denylist`: one literal runtime-specific term per line, matched case-insensitively as a fixed string in both `--tree`/`--staged` and `--history`. A denylist hit **bypasses the allowlist** (definitionally a leak — no false-positive escape hatch). The file is the deliberate inversion of the "never embed literals" rule: the literals live *only* where git will never track them. Local-only gate (present on the operator's machine where the pre-commit hook runs; absent in CI, which checks out without the gitignored file and so does shape-detection only). Sanctioned illustrative names (the produce-theme defaults — Banana / Carrot / Ginger) are explicitly excluded; they're meant to ship. `tools/audit/README.md` documents the layer and its discipline (add terms locally, never name them in any tracked file).
+
+### Fixed
+
+- **Residual shapeless terms scrubbed from history.** The new denylist surfaced a handful of runtime-specific literals that the shape detector could never have caught, sitting in old commits of the design docs and one plan step — including a residual illustrative crew name that collided with a real runtime agent, a capitalized project-name form that survived an earlier lowercase scrub, and a real-name fragment embedded in a placeholder example. Scrubbed from full history via `git filter-repo --replace-text` and force-pushed; design-doc illustrative crew names realigned to the canonical produce-theme default. Per the standing circular-leak discipline, neither this entry nor the decision file names the scrubbed literals — they're recorded by *category* only.
+
+### Changed
+
+- **`VERSION`** → `0.3.2-dev`.
+- **CHANGELOG** — marked v0.3.1 as landed (its work shipped in `58220ae` + scrub follow-ups; the header was stale at "in progress").
+
+### Notes — closing the loop the feedback channel opened
+
+The framework-feedback channel is a genuine structural asset (it's why the framework self-corrects across two proven end-to-end runs). But every channel that carries data is also a channel that can carry *the wrong* data. The denylist is the dedicated countermeasure for the one leak class the shape detector is blind to. It's mechanism-over-discipline applied to the audit itself: the operator no longer has to *remember* not to paste a runtime project name into a canon doc — the gate catches it.
+
+## [v0.3.1] — 2026-05-29 — Boss runtime-audit fixes (labs methodology + spawn template)
 
 Second full end-to-end use of the v0.2.3 framework-feedback channel. Boss audited the live research-lab runtime (at partner's request: "test it, check autonomy, check how work packages get assigned"), fixed the runtime, and filed two framework-feedback items for Vibe Chief to port into canon. This version applies the canon fixes + closes a bug in the feedback channel's own discovery mechanism.
 

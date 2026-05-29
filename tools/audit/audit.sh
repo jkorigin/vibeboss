@@ -71,6 +71,24 @@ done < "$ALLOWLIST_FILE"
 TMP_TARGET="$(mktemp -d -t vbaudit-XXXXXX)"
 trap "rm -rf $TMP_TARGET" EXIT
 
+# ─── Denylist (gitignored, local-only literal runtime terms) ─────────────────
+# Catches SHAPELESS runtime-specific names — project names, crew names, other
+# ventures the operator works on — that the shape-based patterns above cannot
+# see (a bare word like a project name has no detectable shape). Lives at
+# <repo>/.vibeboss-denylist, gitignored: it contains the very terms it protects
+# against, so it must NEVER be committed. Present locally (the pre-commit gate
+# that matters for a single-operator repo); absent in CI (CI checks out the repo
+# without the gitignored file, so CI does shape-detection only). This closes the
+# framework-feedback leak vector: runtime data flows toward source via the
+# feedback channel; the denylist flags any runtime-specific literal that slips in.
+DENYLIST_FILE="$(cd "$SCRIPT_DIR/../.." && pwd)/.vibeboss-denylist"
+DENY_PATTERNS=""
+if [ -f "$DENYLIST_FILE" ]; then
+  DENY_PATTERNS="$TMP_TARGET/deny.patterns"
+  grep -vE '^[[:space:]]*(#|$)' "$DENYLIST_FILE" 2>/dev/null > "$DENY_PATTERNS" || true
+  [ -s "$DENY_PATTERNS" ] || DENY_PATTERNS=""
+fi
+
 case "$MODE" in
   tree)
     # Scan tracked files in working tree
@@ -121,6 +139,13 @@ flag() {
   printf '%s\n' "[$category] $file:$lineno  $snippet" >> "$FINDINGS_FILE"
 }
 
+flag_denylist() {
+  # Denylist hits BYPASS the allowlist — a denylist term is definitionally a leak.
+  local file="$1" lineno="$2" snippet="$3"
+  if [ ${#snippet} -gt 200 ]; then snippet="${snippet:0:200}..."; fi
+  printf '%s\n' "[denylist-term] $file:$lineno  $snippet" >> "$FINDINGS_FILE"
+}
+
 scan_file() {
   local f="$1"
   # Skip binaries, symlinks, missing files
@@ -131,8 +156,10 @@ scan_file() {
   fi
 
   # Skip the audit's own files (they intentionally contain pattern descriptions)
+  # and the denylist itself (it intentionally contains the literal sensitive terms)
   case "$f" in
     tools/audit/*) return 0 ;;
+    .vibeboss-denylist) return 0 ;;
   esac
 
   # Read file once into a temp + iterate with grep
@@ -178,6 +205,14 @@ scan_file() {
     [ -z "$lineno" ] && continue
     flag "credential-assignment" "$f" "$lineno" "$snippet"
   done < <(grep -nE '(password|passwd|api[_-]?key|secret|token)\s*[:=]\s*["\x27][^"\x27]{8,}["\x27]' "$f" 2>/dev/null)
+
+  # Denylist: literal runtime-specific terms (case-insensitive fixed-string match)
+  if [ -n "$DENY_PATTERNS" ]; then
+    while IFS=: read -r lineno snippet; do
+      [ -z "$lineno" ] && continue
+      flag_denylist "$f" "$lineno" "$snippet"
+    done < <(grep -niFf "$DENY_PATTERNS" "$f" 2>/dev/null)
+  fi
 }
 
 # ─── Scan ────────────────────────────────────────────────────────────────────
@@ -210,6 +245,13 @@ if [ "$MODE" = "history" ]; then
     [ -z "$lineno" ] && continue
     flag "credential" "<history>" "$lineno" "$snippet"
   done < <(grep -nE '(sk-ant-[a-zA-Z0-9_-]{20,}|ghp_[a-zA-Z0-9]{36,}|AKIA[0-9A-Z]{16})' "$HIST_DUMP" 2>/dev/null)
+
+  if [ -n "$DENY_PATTERNS" ]; then
+    while IFS=: read -r lineno snippet; do
+      [ -z "$lineno" ] && continue
+      flag_denylist "<history>" "$lineno" "$snippet"
+    done < <(grep -niFf "$DENY_PATTERNS" "$HIST_DUMP" 2>/dev/null)
+  fi
 else
   # File-list mode (tree or staged)
   while IFS= read -r f; do
