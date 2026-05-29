@@ -1,10 +1,18 @@
 # Vibeboss
 
-**A conventions + hooks pack for Claude Code, with Codex-compatible instruction and hook surfaces, that gives non-technical operators a memory-disciplined workspace where sessions auto-boot with state, lessons, crew, and inbox context.**
+**Give your AI a memory.**
 
-What ships today: a scaffolder (`init.sh`), a templates tree, Claude Code `.claude/` hooks, Codex `.codex/` hook mirrors, `AGENTS.md` files for Codex, and a set of memory disciplines (runlog, STATE, decisions, LESSONS, inbox). What it does *not* yet ship: an autonomous runtime engine. That's Phase 1 — see [ROADMAP.md](ROADMAP.md).
+Vibeboss is a setup pack for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (and Codex) that turns each blank AI session into a workspace that already knows your project — where things stand, what's been decided, which mistakes to avoid, and what's waiting in your inbox. You talk to it in plain language; it keeps the structure, so nothing drifts or gets forgotten between sessions.
 
-> *Skip permissions, approve all, goodnight* — but without the drift, with memory of every mistake, and surfacing only when it genuinely needs you. **(That's the goal. Today's cut delivers the memory and discipline scaffolding; the don't-stop loop and verification tooling arrive in Phase 1.)**
+**What's here today** — the memory + discipline layer:
+
+- a one-command installer (`init.sh`) that scaffolds your workspace
+- auto-boot hooks for Claude Code and Codex, so every session loads your context *before* the first message
+- the file conventions that keep the AI grounded: project state, an append-only work log, immutable decision records, lessons captured from your corrections, and an inbox for tasks
+
+**What's not here yet** — a fully autonomous, runs-on-its-own engine. That's Phase 1; see [ROADMAP.md](ROADMAP.md).
+
+> *Skip permissions, approve all, goodnight* — the dream of handing an AI a goal and walking away. Vibeboss aims to make that safe: no drift, memory of every mistake, surfacing only when it genuinely needs you. Today's release delivers the memory and discipline that make it possible; the don't-stop loop and verification tooling arrive in Phase 1.
 
 ## Quick Start
 
