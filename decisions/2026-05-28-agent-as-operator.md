@@ -14,7 +14,7 @@ Partner caught it: *"users won't run scripts. you need to design the agents to h
 
 This is correct against Vibeboss's stated target: non-technical 40+ business operators. The README's *Target user* block explicitly names *"don't want to learn Git, terminal, or technical configuration."* Showing commands to operators contradicts that premise on first contact.
 
-Source of the leak: same cargo-cult pattern as the `--max-budget-usd 10` issue fixed in commit 396b596 — canon was drafted with a developer-fluent operator implicitly in mind, even though the target-user block says the opposite.
+Source of the leak: same cargo-cult pattern as the `--max-budget-usd 10` issue fixed in the v0.2.5 $10-cleanup — canon was drafted with a developer-fluent operator implicitly in mind, even though the target-user block says the opposite.
 
 ## Decision
 
@@ -72,7 +72,7 @@ Source of the leak: same cargo-cult pattern as the `--max-budget-usd 10` issue f
 
 ## Consequences
 
-- v0.2.5 ships the architectural shift that fixes the second of the two weird traits partner flagged (the first — Boss quoting "$10 per spawn" — was fixed in commit 396b596).
+- v0.2.5 ships the architectural shift that fixes the second of the two weird traits partner flagged (the first — Boss quoting "$10 per spawn" — was fixed in the v0.2.5 $10-cleanup).
 - The README's user-facing copy stops being a CLI cheat-sheet and starts being a conversation guide. Material surface change; partner should re-read it once the commit lands to make sure it reads naturally to a non-technical audience.
 - Future canon work follows LESSON-009 by default: when a new script ships (e.g. a future v0.3.0 `add-skill` command), the README documents the verbal intent + adds a Partner-facing-protocols entry; the script itself is for Boss's Bash tool.
 - The Boss → Vibe Chief feedback channel shipped in v0.2.3 (`hq/follow-ups/framework/`) now has a use case: if Boss drifts back to showing commands, partner reports it via the feedback channel, Vibe Chief sharpens the protocols.

@@ -8,7 +8,7 @@
 
 ## Context
 
-The v0.2.4 rolling handover mechanism (commit `74ff817`) shipped a `Stop` hook that fired every turn and rewrote `hq/handovers/_current.md` with the latest exchange + grepped markers. The design was intended to ensure that at the moment Claude Code's auto-compact fires, a fresh handover always exists for `compact-boot.sh` to inject.
+The v0.2.4 rolling handover mechanism (v0.2.4) shipped a `Stop` hook that fired every turn and rewrote `hq/handovers/_current.md` with the latest exchange + grepped markers. The design was intended to ensure that at the moment Claude Code's auto-compact fires, a fresh handover always exists for `compact-boot.sh` to inject.
 
 Boss in the live HQ session ran the acceptance gate from that decision (the keyword test: partner passes a phrase, triggers `/compact`, post-compact session must surface the keyword verbatim on first response). It failed. Boss diagnosed root cause, switched to a PreCompact-hook design with pinned/rolling separation, re-ran the test, and **passed live** — partner's keyword `cat climb clock tower dog run stairs eagle beats the eye` led the post-compact response verbatim.
 

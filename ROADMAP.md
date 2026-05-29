@@ -47,7 +47,7 @@ End-to-end keyword-test passed live before this canon port — partner's phrase 
 
 ## Recently shipped (v0.2.5)
 
-Agent-as-operator: the framework no longer assumes partner runs scripts. Boss + Vibe Chief + per-project build leads all execute CLI on partner's verbal request and report results, not commands. Closes the second weird trait partner flagged (the first — $10 cost parroting — was fixed in commit 396b596). See [decisions/2026-05-28-agent-as-operator.md](decisions/2026-05-28-agent-as-operator.md).
+Agent-as-operator: the framework no longer assumes partner runs scripts. Boss + Vibe Chief + per-project build leads all execute CLI on partner's verbal request and report results, not commands. Closes the second weird trait partner flagged (the first — $10 cost parroting — was fixed in the v0.2.5 $10-cleanup). See [decisions/2026-05-28-agent-as-operator.md](decisions/2026-05-28-agent-as-operator.md).
 
 - **LESSON-009 — Agent-as-operator.** Boss runs scripts; partner speaks intent. Hard-gated in `templates/hq/lessons.md`. The one exception is the unavoidable `bash init.sh` bootstrap.
 - **Partner-facing protocols section in `templates/hq/CLAUDE.md`.** Canonical mappings for "Apply the update", "Start a new project", "There's a framework bug", "Show me what's in the inbox" — Boss has a script for what to confirm, what to run via the Bash tool, and how to report results.
