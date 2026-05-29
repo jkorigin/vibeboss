@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibeboss Labs</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">labs</span>
+        <span class="brand-workspace" id="workspace-name">…</span>
+      </div>
+      <nav class="counts" id="counts" aria-label="finding counts">
+        <span class="count" data-status="pending-pickup">pending <em id="count-pending">0</em></span>
+        <span class="count" data-status="revise-requested">revise <em id="count-revise">0</em></span>
+        <span class="count" data-status="applied">applied <em id="count-applied">0</em></span>
+        <span class="count" data-status="rejected">rejected <em id="count-rejected">0</em></span>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <aside class="rail" aria-label="findings list">
+        <div class="rail-filter">
+          <label for="filter">Show</label>
+          <select id="filter">
+            <option value="all">all</option>
+            <option value="pending-pickup" selected>pending</option>
+            <option value="revise-requested">revise-requested</option>
+            <option value="applied">applied</option>
+            <option value="rejected">rejected</option>
+          </select>
+        </div>
+        <ul id="findings-list" class="findings-list" aria-live="polite"></ul>
+      </aside>
+
+      <section class="detail" id="detail" aria-live="polite">
+        <p class="empty">Select a finding to review.</p>
+      </section>
+    </main>
+
+    <template id="detail-template">
+      <article class="finding">
+        <header class="finding-head">
+          <h1 class="finding-title"></h1>
+          <div class="finding-meta">
+            <span class="meta-pill project"></span>
+            <span class="meta-pill researcher"></span>
+            <span class="meta-pill date"></span>
+            <span class="meta-pill confidence"></span>
+            <span class="meta-pill risk"></span>
+            <span class="meta-pill status"></span>
+          </div>
+        </header>
+
+        <section class="finding-body"></section>
+
+        <section class="actions" aria-label="disposition">
+          <h2>Disposition</h2>
+          <div class="action-buttons">
+            <button data-action="applied" class="btn btn-approve">Approve (applied)</button>
+            <button data-action="revise-requested" class="btn btn-revise">Request revisions</button>
+            <button data-action="rejected" class="btn btn-reject">Reject</button>
+          </div>
+        </section>
+
+        <section class="comment-form" aria-label="comment">
+          <h2>Comment</h2>
+          <label class="row">
+            <span>Author</span>
+            <input type="text" name="author" value="partner" />
+          </label>
+          <label class="row">
+            <span>Comment</span>
+            <textarea name="text" rows="4" placeholder="What does the build lead need to know?"></textarea>
+          </label>
+          <button type="button" class="btn btn-primary" data-action="comment">Post comment</button>
+        </section>
+      </article>
+    </template>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

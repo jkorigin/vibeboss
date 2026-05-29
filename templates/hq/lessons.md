@@ -72,3 +72,43 @@ If any of (a)-(c) are foggy, ask before coding.
 - Full SOP: `hq/skills/dispatch-vibe-chief/SKILL.md`.
 
 **Skip for:** runtime work that is not framework-canon-affecting (everything inside the workspace). Framework-canon means anything written under `~/ventures/vibeboss/` — templates, decisions, CHANGELOG, init.sh, reno.sh, CHIEF.md, README.md.
+
+## LESSON-011 — Research-first on real ambiguity: dispatch, don't guess
+
+**Rule:** When {{LEAD_NAME}} or a project build-lead encounters a decision-issue they cannot resolve in-context with confidence, they MUST dispatch to research instead of guessing, hallucinating, or blocking on {{OPERATOR_ADDRESSED_AS}}. Three dispatch tiers based on scope of the unknown:
+
+- **T1 — In-context** (default for small unknowns): {{LEAD_NAME}} researches themselves — spike, grep code, read official docs. Use when the question can be answered in <15 min of focused work with a single authoritative source. Per existing LESSON-003.
+- **T2 — Sync parallel subagents** (medium scope): {{LEAD_NAME}} spawns 2-3 Explore agents via the `Agent` tool in parallel, synthesizes returns. Use when the question has 2-3 distinct angles, expected to resolve in 15-30 min, and the answer is needed in the current session. Each subagent gets a focused brief, returns evidence with source URLs.
+- **T3 — Async to labs** (large scope): {{LEAD_NAME}} writes a research request to `hq/projects/labs/inbox/requests/YYYY-MM-DD-from-{{LEAD_NAME}}-<topic>.md` and continues with a `[RESEARCH-PENDING: <topic>]`-marked workaround. The labs research lead picks up on next spawn, runs the methodology in `labs/skills/research/SKILL.md`, writes a finding + handoff. Use when the question needs methodology (hypothesis-first, multi-source validation), takes >30 min, requires running experiments, or needs to validate against partner's existing code/state across the project.
+
+**Why:** Without explicit dispatch tiers, agents default to either guessing (Tier U evidence — pattern-from-training without verifiable source) or blocking partner with verbal questions. T1 is fine for most things. T2 catches mid-scope unknowns without async overhead. T3 is the framework's autonomy mechanism — agents don't stop when stuck, they dispatch and keep working.
+
+**How to apply:** Before answering any decision-issue, classify: which tier? If T1, just do it. If T2, dispatch 2-3 Explore agents with focused briefs and a CONTRACT prompt prefix (see LESSON-012 for evidence discipline they must follow). If T3, write the request, mark the workaround in code with `[RESEARCH-PENDING]`, continue. Never let "I'm not sure" become a hallucination.
+
+**Skip for:** simple factual lookups (T1 is fine), questions {{OPERATOR_ADDRESSED_AS}} can answer in one sentence (just ask them), or tasks where the unknown is genuinely the partner's preference and not a researchable question.
+
+## LESSON-012 — Cite evidence with source tiers; derive confidence from tier mix
+
+**Rule:** Every claim in a research finding cites evidence with a tier label. Confidence is **derived** from the tier mix, not asserted free-form. Five tiers:
+
+- **Tier A — Primary / authoritative.** The thing itself or its official source. Examples: official documentation (Anthropic docs, library README), source code that was read directly, RFC/spec, reproducible test result you ran.
+- **Tier B — Secondary / reputable.** Authored by someone with verifiable expertise. Examples: maintainer's blog (e.g. Jesse Vincent on superpowers), Anthropic engineering blog, peer-reviewed paper, high-vote recent Stack Overflow answer.
+- **Tier C — Tertiary / opinion.** A real source but derivative or unverified. Examples: random Medium post, Substack, tutorial site of unknown authorship, X thread.
+- **Tier D — Hype / superficial.** Marketing-grade or contentless. Examples: listicles ("Top 10 frameworks"), influencer takes without code, content-farm articles, LLM-generated content presented as evidence.
+- **Tier U — Untraceable / from-memory.** Pattern recalled from training with no specific source. Honest examples: *"I recall that Claude typically..."*, *"It's well-known that..."*. Use this label whenever you cannot point to a real source.
+
+**Confidence derivation table:**
+
+| Evidence mix | Confidence |
+|---|---|
+| Multiple Tier A, corroborating, no contradiction | HIGH |
+| Single Tier A + Tier B corroboration, OR multiple Tier B | MEDIUM-HIGH |
+| Tier B + C mix, no contradiction | MEDIUM |
+| Mostly C/D, single source, OR Tier-U-dominant | LOW |
+| Contradicting sources, unresolved | LOW + needs re-dispatch |
+
+**Why:** Without source tiering, "Confidence: HIGH" is a feeling, not a fact. Tier U surfaces when an agent is relying on training-data patterns it cannot verify — this is the anti-hallucination layer. The audit trail (decision → finding → tier-tagged evidence) lets {{OPERATOR_ADDRESSED_AS}} trace a wrong decision back to its source quality: *"oh, this rested on two Tier-C blog posts."*
+
+**How to apply:** When writing a finding, label every citation. When deriving confidence, look up the rubric — don't free-form. If most evidence is Tier U, confidence cannot exceed LOW. If Tier-A sources contradict, the answer is "re-dispatch with refined question" not "make a judgment call."
+
+**Skip for:** clearly subjective claims (*"this reads more cleanly"*) — those don't pretend to be evidence-backed.

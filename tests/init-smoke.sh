@@ -356,6 +356,34 @@ if [ ! -x "$REPO_DIR/migrations/v0.2.2-dev-to-v0.2.3-dev.sh" ]; then
   fail "missing or non-executable: migrations/v0.2.2-dev-to-v0.2.3-dev.sh"
 fi
 
+# v0.3.0 — autonomous research loop + lab dashboard
+check_file "$TMPWS/labs/skills/research/SKILL.md"
+check_file "$TMPWS/labs/_templates/hypothesis.md"
+check_file "$TMPWS/labs/_templates/finding.md"
+check_file "$TMPWS/labs/_templates/handoff.md"
+check_file "$TMPWS/labs/dashboard/README.md"
+check_exec "$TMPWS/labs/dashboard/start.sh"
+check_file "$TMPWS/labs/dashboard/server.ts"
+check_file "$TMPWS/labs/dashboard/package.json"
+check_file "$TMPWS/labs/dashboard/public/index.html"
+check_file "$TMPWS/labs/dashboard/public/style.css"
+check_file "$TMPWS/labs/dashboard/public/app.js"
+if [ ! -d "$TMPWS/labs/dashboard/.runtime" ]; then
+  fail "missing directory: labs/dashboard/.runtime/"
+fi
+if ! grep -q "^## LESSON-011" "$TMPWS/hq/lessons.md" 2>/dev/null; then
+  fail "hq/lessons.md missing LESSON-011 (research-dispatch tiers)"
+fi
+if ! grep -q "^## LESSON-012" "$TMPWS/hq/lessons.md" 2>/dev/null; then
+  fail "hq/lessons.md missing LESSON-012 (source-tier discipline)"
+fi
+if ! grep -q "Research dispatch + pickup" "$TMPWS/hq/CLAUDE.md" 2>/dev/null; then
+  fail "hq/CLAUDE.md missing Research dispatch + pickup protocol section"
+fi
+if [ ! -x "$REPO_DIR/migrations/v0.2.7-dev-to-v0.3.0-dev.sh" ]; then
+  fail "missing or non-executable: migrations/v0.2.7-dev-to-v0.3.0-dev.sh"
+fi
+
 # ─── v0.2.5: agent-as-operator (LESSON-009, verbal banner, protocols) ────────
 echo "Testing v0.2.5 agent-as-operator..."
 

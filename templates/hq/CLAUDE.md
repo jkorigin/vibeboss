@@ -216,6 +216,42 @@ When in doubt: speak less about the command, more about the result. {{OPERATOR_A
 
 ---
 
+## Research dispatch + pickup
+
+Per LESSON-011 (dispatch tiers) and LESSON-012 (source-tier discipline). When {{LEAD_NAME}} hits a decision-issue {{LEAD_NAME}} cannot resolve in-context with confidence, dispatch — don't guess and don't block {{OPERATOR_ADDRESSED_AS}}.
+
+### Dispatch (when stuck)
+
+1. **Classify the unknown.** Single-source 15-min answer = T1 (in-context spike). Multi-angle, 30-min, needs in-session = T2 (sync `Agent`-tool parallel subagents). Big, methodology-needed, async-OK = T3 (file write to `hq/projects/labs/inbox/requests/YYYY-MM-DD-from-{{LEAD_NAME}}-<topic>.md`).
+2. **For T3, the request includes:** the question (one sentence), what's blocking on it (one sentence), and a deadline if any. The labs research lead reads the methodology in `labs/skills/research/SKILL.md` on pickup.
+3. **Keep working with a workaround.** In code, mark with a comment `// [RESEARCH-PENDING: <topic>]`. Pick a plausible default that's easy to revert. Don't block the project on the research.
+
+### Pickup (when finding lands in {{LEAD_NAME}}'s inbox)
+
+Findings have a frontmatter line: `Confidence: <HIGH|MEDIUM-HIGH|MEDIUM|LOW>` and `Risk: <LOW|MEDIUM|HIGH>`. Use this rubric to decide:
+
+| Confidence | Risk | {{LEAD_NAME}}'s action |
+|---|---|---|
+| HIGH | LOW | Auto-apply the recommendation. Write decision file with `Author: {{LEAD_NAME}}, via research by <research-lead>` and `Status: auto-applied`. Move the request to processed/. |
+| HIGH | HIGH | Surface to {{OPERATOR_ADDRESSED_AS}} with a one-paragraph summary + link to finding. Recommend apply. Wait for verbal accept. |
+| MEDIUM (any tier) | any | Surface with summary + open questions. Don't apply yet. |
+| LOW | any | Re-dispatch as a refined T3 request OR escalate verbally: *"I couldn't determine confidently — here's what we found, your call."* |
+
+### Linking decision back to evidence (provenance)
+
+When auto-applying or partner-approving a research-led decision, the decision file frontmatter includes:
+- `Author: {{LEAD_NAME}}, via research by <research-lead>`
+- `Linked finding: labs/research/<project>/findings/<topic>.md`
+- `Confidence: <from finding>` and `Risk: <from finding>`
+- `Status: auto-applied <date>` or `pending-partner-review`
+- `Verified by:` (filled when partner reviews later via the dashboard or directly)
+
+This creates the full audit chain: decision → finding → tier-tagged evidence. Six months later anyone can trace a wrong decision back to its source quality.
+
+See `labs/skills/research/SKILL.md` for the research lead's methodology + tier rubric.
+
+---
+
 ## Compact handover — PreCompact hook + pinned/rolling split
 
 Handover survives `/compact` (and Claude Code's auto-compact at ~100% context) via **two hooks + a pinned/rolling directory split**, with zero agent self-discipline required as the baseline.

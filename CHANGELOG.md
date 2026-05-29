@@ -2,7 +2,41 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
-## [unreleased] — v0.2.7 in progress — Sensitivity-audit mechanism + pre-public security pass (2026-05-28)
+## [unreleased] — v0.3.0 in progress — Autonomous research-dispatch loop + lab review dashboard (2026-05-28)
+
+Closes the framework's biggest stated-but-unwired feature gap. Build-leads encountering decision-issues now dispatch to research instead of stopping or hallucinating; findings come back with derived confidence + risk + tier-tagged evidence; partners review pending findings via a Bun-served local dashboard with approve/revise/reject + comments. Files-as-canon: the dashboard never owns data — it's a UI layer over the markdown.
+
+Six-principle architecture (derived from problem-shape, not vendor-imported from the reference research operation): **Confidence × Risk rubric**, **dispatch as a spectrum** (T1 in-context / T2 sync Agent-tool / T3 async to labs), **three-rule methodology**, **findings-as-patches when applicable**, **provenance via decision-file frontmatter**, **every source labelled with a tier (A/B/C/D/U)**. See `decisions/2026-05-28-research-loop-and-dashboard.md` for the full architecture rationale and the deliberate departures from the reference operation.
+
+### Added
+
+- **LESSON-011 — Research-first on real ambiguity: dispatch, don't guess.** `templates/hq/lessons.md`. When a lead or build-lead encounters a decision-issue they can't resolve in-context, they MUST dispatch (not guess, hallucinate, or block the operator). Three dispatch tiers based on scope.
+- **LESSON-012 — Cite evidence with source tiers; derive confidence from tier mix.** Five tiers (A primary / B reputable / C tertiary / D hype / U untraceable-from-training). Confidence is **derived** from the tier mix, not asserted free-form. Tier U is the anti-hallucination layer — it forces the model to name when it's pattern-matching from training without a verifiable source.
+- **`## Research dispatch + pickup` protocol section** in `templates/hq/CLAUDE.md` and mirrored in `templates/projects/_per_project/README.md`. Documents the dispatch tiers + the Confidence × Risk pickup rubric (HIGH+LOW → auto-apply; HIGH+HIGH → surface; MEDIUM → surface; LOW → re-dispatch or escalate) + the decision-file frontmatter for research-led provenance.
+- **`CHIEF.md` discipline bullet 9** — *"Research dispatch. When you can't determine canonically, dispatch (LESSONS 011-012). Never let 'I'm not sure' become hallucination in framework canon."*
+- **`templates/labs/skills/research/SKILL.md`** — the research methodology Ginger reads on pickup. Three rules (hypothesis-first, tier-tagged evidence, recommended action). Tier rubric + Confidence-derivation table. 8-step shape as guidance. Composes with superpowers (the always-on baseline) — uses `superpowers:brainstorming` for hypothesis stage, `superpowers:systematic-debugging` for falsification.
+- **`templates/labs/_templates/hypothesis.md`** — pre-research template (question, expected finding, falsification, out-of-scope, dispatch plan).
+- **`templates/labs/_templates/finding.md`** — finding template with required frontmatter (`confidence:`, `risk:`, `status:`, `linked_decision:`), tier-tagged evidence section, confidence derivation, risk assessment, optional patch block, comments section.
+- **`templates/labs/_templates/handoff.md`** — labs-to-build-lead handoff with TL;DR + pickup rubric reference + disposition footer.
+- **`templates/labs/dashboard/`** — Bun-served single-process review UI. Workspace-scope (one dashboard per workspace). Vanilla HTML/CSS/JS — no React/Vue/Svelte. ~900 LOC total. Files: `README.md`, `start.sh` (executable; auto-picks port 3101-3110, writes `.runtime/port`), `server.ts` (~257 LOC Bun HTTP with atomic frontmatter write-back), `package.json`, `public/{index.html, style.css, app.js}`, `.runtime/.gitkeep`.
+- **Dashboard API contract** (for future master-dashboard integration in v0.4.0): `GET /api/findings`, `GET /api/findings/:id`, `POST /api/findings/:id/status`, `POST /api/findings/:id/comment`. Localhost-bind only. Documented in `templates/labs/dashboard/README.md`.
+- **`init.sh` Bun availability check** — warns if Bun isn't installed, points at https://bun.sh, does NOT block install. The dashboard is opt-in; findings remain reviewable as files without Bun.
+- **`migrations/v0.2.7-dev-to-v0.3.0-dev.sh`** — backfills `labs/skills/research/`, `labs/_templates/`, `labs/dashboard/` directory structure for existing workspaces. Also appends `labs/dashboard/.runtime/` to the workspace's `.gitignore` so the runtime port file doesn't get committed. File contents are populated by the next `init.sh --update --noninteractive` after this migration runs.
+- **Smoke test extended** (`tests/init-smoke.sh`): verifies SKILL.md + 3 artifact templates + 7 dashboard files (including executable bit on `start.sh`); verifies `.runtime/` directory present; verifies LESSON-011 + LESSON-012 in `hq/lessons.md`; verifies "Research dispatch + pickup" section in `hq/CLAUDE.md`; verifies migration script executable.
+- `decisions/2026-05-28-research-loop-and-dashboard.md` — full decision: the six principles, why each, what shipped, the deliberate departures from the reference research operation (no CONTRACT.md, no PORTFOLIO.md, no mickey-brew/recipes/ wholesale import), and the limits (rubric is mechanical not perfect; Tier U is honest but not enforceable; dashboard is local-only-no-auth; first time the framework ships code-not-just-markdown-and-bash; Bun is a new dependency).
+
+### Changed
+
+- **`VERSION`** bumped to `0.3.0-dev`.
+- **`ROADMAP.md`** — "Recently shipped (v0.3.0)" section above v0.2.7. The Phase 1 ROADMAP item *"Main / Builder / Research separation as real processes"* — the Research half is shipped; Main and Builder remain Phase 1+ work.
+
+### Deferred (v0.4.0+)
+
+- **Master dashboard integration.** The deferred `dashboard-bootstrap.sh` item from v0.1.0 plus the per-workspace lab discovery via `vibeboss/.workspaces` + each workspace's `labs/dashboard/.runtime/port`. Master shows per-workspace lab tiles with pending-finding count badges; click tile → opens lab dashboard URL.
+- **CI runs the dashboard.** Currently CI runs smoke test + sensitivity audit. Adding a Bun job that lints/builds `server.ts` + `app.js` is straightforward but not in v0.3.0 scope.
+- **Methodology addendums.** Project-specific heavier methodologies (literature review, A/B testing, formal verification) live at `labs/research/<project>/methodology-addendum.md` when needed; the framework SKILL stays slim. No template shipped — operators write per-project as needed.
+
+## [v0.2.7] — 2026-05-28 — Sensitivity-audit mechanism + pre-public security pass
 
 Three-layer mechanism so every future commit + push is gated against personal/sensitive data leaks. Also consolidates the comprehensive pre-public security scrub (HEAD + git-filter-repo history rewrite) that motivated the mechanism.
 

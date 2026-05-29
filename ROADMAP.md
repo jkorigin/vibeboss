@@ -6,6 +6,20 @@ For what *is* shipped today, see [README.md](README.md#what-ships-today) and [CH
 
 ---
 
+## Recently shipped (v0.3.0)
+
+Autonomous research-dispatch loop + lab review dashboard. Closes the framework's biggest stated-but-unwired feature gap. Build-leads encountering decision-issues now dispatch to research (T1 in-context / T2 sync Agent-tool / T3 async to labs) instead of stopping or hallucinating. Findings come back with derived confidence + risk + tier-tagged evidence (Tier A primary / B reputable / C tertiary / D hype / U untraceable). Partners review pending findings via a Bun-served local dashboard with approve/revise/reject + comments. Files-as-canon: dashboard is a UI layer over markdown. See [decisions/2026-05-28-research-loop-and-dashboard.md](decisions/2026-05-28-research-loop-and-dashboard.md).
+
+- **LESSONS 011 (dispatch tiers) + 012 (source-tier discipline)** in `templates/hq/lessons.md`. Plus `## Research dispatch + pickup` protocol section in CLAUDE.md, per-project README, and CHIEF.md.
+- **`templates/labs/skills/research/SKILL.md`** — methodology (three rules + tier rubric + Confidence-derivation table + 8-step guidance shape). Composes with superpowers (the always-on baseline).
+- **`templates/labs/_templates/{hypothesis,finding,handoff}.md`** — artifact templates. Findings include frontmatter (confidence/risk/status/linked_decision) + tier-tagged evidence + optional patch block.
+- **`templates/labs/dashboard/`** — Bun-served review UI. Workspace-scope (one per workspace). Vanilla HTML/CSS/JS, no npm dependencies beyond Bun. ~900 LOC. Auto-picks port 3101-3110. Localhost-bind only.
+- **Dashboard JSON API** (`GET /api/findings`, `POST /status`, `POST /comment`) documented as the contract for v0.4.0 master-dashboard integration.
+- **`init.sh`** — Bun availability check (warns, doesn't block; findings remain reviewable as files without Bun).
+- **`migrations/v0.2.7-dev-to-v0.3.0-dev.sh`** — backfills new dirs + `.gitignore` entry for `.runtime/`.
+
+Phase 1 ROADMAP item *"Main / Builder / Research separation as real processes"* — the **Research** half is shipped. Main and Builder remain Phase 1+.
+
 ## Recently shipped (v0.2.7)
 
 Sensitivity-audit mechanism + comprehensive pre-public security scrub. From this version forward, every commit + every push is gated against personal/sensitive data leaks by a shape-based detector. See [decisions/2026-05-28-sensitivity-audit-mechanism.md](decisions/2026-05-28-sensitivity-audit-mechanism.md).

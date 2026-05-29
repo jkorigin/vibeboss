@@ -901,6 +901,14 @@ else
   MISSING_PREREQS=true
 fi
 
+if command -v bun &>/dev/null; then
+  info "bun found: $(command -v bun) — labs dashboard available"
+else
+  warn "bun not found — the labs review dashboard requires it (optional but recommended)."
+  echo "    Install Bun from: https://bun.sh"
+  echo "    Without Bun, you can still review research findings as files; the dashboard UI just won't run."
+fi
+
 if $MISSING_PREREQS; then
   echo ""
   warn "Some prerequisites are missing. The workspace will be scaffolded,"
@@ -1072,6 +1080,28 @@ write_file "$TEMPLATES/labs/inbox/README.md"                              "$LABS
 write_file "$TEMPLATES/labs/research/README.md"                           "$LABS_PATH/research/README.md"
 write_file "$TEMPLATES/labs/research/_per_project_template/STATE.md"      "$LABS_PATH/research/_per_project_template/STATE.md"
 write_file "$TEMPLATES/labs/handoffs/README.md"                           "$LABS_PATH/handoffs/README.md"
+
+# ── Labs research methodology (v0.3.0) ────────────────────────────────────────
+ensure_dir "$LABS_PATH/skills/research"
+ensure_dir "$LABS_PATH/_templates"
+write_file "$TEMPLATES/labs/skills/research/SKILL.md"                     "$LABS_PATH/skills/research/SKILL.md"
+write_file "$TEMPLATES/labs/_templates/hypothesis.md"                     "$LABS_PATH/_templates/hypothesis.md"
+write_file "$TEMPLATES/labs/_templates/finding.md"                        "$LABS_PATH/_templates/finding.md"
+write_file "$TEMPLATES/labs/_templates/handoff.md"                        "$LABS_PATH/_templates/handoff.md"
+
+# ── Labs dashboard (v0.3.0 — Bun-served review UI) ────────────────────────────
+ensure_dir "$LABS_PATH/dashboard"
+ensure_dir "$LABS_PATH/dashboard/public"
+ensure_dir "$LABS_PATH/dashboard/.runtime"
+write_file "$TEMPLATES/labs/dashboard/README.md"                          "$LABS_PATH/dashboard/README.md"
+write_file "$TEMPLATES/labs/dashboard/start.sh"                           "$LABS_PATH/dashboard/start.sh"
+write_file "$TEMPLATES/labs/dashboard/server.ts"                          "$LABS_PATH/dashboard/server.ts"
+write_file "$TEMPLATES/labs/dashboard/package.json"                       "$LABS_PATH/dashboard/package.json"
+write_file "$TEMPLATES/labs/dashboard/public/index.html"                  "$LABS_PATH/dashboard/public/index.html"
+write_file "$TEMPLATES/labs/dashboard/public/style.css"                   "$LABS_PATH/dashboard/public/style.css"
+write_file "$TEMPLATES/labs/dashboard/public/app.js"                      "$LABS_PATH/dashboard/public/app.js"
+touch_file "$LABS_PATH/dashboard/.runtime/.gitkeep"
+[ "$DRY_RUN" = "true" ] || chmod +x "$LABS_PATH/dashboard/start.sh"
 
 touch_file "$LABS_PATH/inbox/requests/.gitkeep"
 touch_file "$LABS_PATH/inbox/processed/.gitkeep"
