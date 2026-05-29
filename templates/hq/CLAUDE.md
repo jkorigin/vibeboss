@@ -137,9 +137,12 @@ Named agent reads its inbox on next boot. **After task completion** (not at pick
 PATH="<node path>:$PATH" claude -p "<task prompt>" \
   --model sonnet \
   --output-format stream-json \
+  --verbose \
   > /tmp/<AgentName>-<date>.out 2>&1 &
 echo "PID: $!"
 ```
+
+> **`--verbose` is required.** Current Claude Code rejects `--print`/`-p` combined with `--output-format stream-json` unless `--verbose` is also passed (`Error: When using --print, --output-format=stream-json requires --verbose`). Verified against CC 2.1.156. Without it the spawn exits instantly with a 1-line error file. Keep `--verbose` in every print-mode stream-json invocation.
 
 > **Note on cost.** A spawn does not incur per-spawn dollar charges for partners on a Claude subscription (Pro / Max) — the subscription absorbs usage. The `claude -p` flag `--max-budget-usd <N>` exists as a safety cap for users on API-tier billing (pay-per-token); it's not part of the default spawn example and `{{LEAD_NAME}}` should not quote a per-spawn cost to {{OPERATOR_ADDRESSED_AS}} on a subscription plan. Add the flag only if {{OPERATOR_ADDRESSED_AS}} has confirmed they're on API billing.
 

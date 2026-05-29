@@ -61,6 +61,8 @@ Per LESSON-011 (dispatch tiers) and LESSON-012 (source-tier discipline) in `hq/l
 ### Dispatch (when stuck)
 
 1. **Classify the unknown.** Single-source 15-min answer = T1 (in-context spike). Multi-angle, 30-min, needs in-session = T2 (sync `Agent`-tool parallel subagents). Big, methodology-needed, async-OK = T3 (file write to `hq/projects/labs/inbox/requests/YYYY-MM-DD-from-{{CREW_NAME}}-<topic>.md`).
+
+   **Authorized write path:** {{CREW_NAME}} MAY write research requests to `hq/projects/labs/inbox/requests/` (research-requests only — `from-{{CREW_NAME}}-<topic>.md` naming). This is the one path outside {{CREW_NAME}}'s own project tree that {{CREW_NAME}} is sanctioned to write to. It's a grant, not just a described flow — the T3 dispatch tier depends on it.
 2. **For T3, the request includes:** the question (one sentence), what's blocking on it (one sentence), and a deadline if any. The labs research lead reads the methodology in `labs/skills/research/SKILL.md` on pickup.
 3. **Keep working with a workaround.** In code, mark with a comment `// [RESEARCH-PENDING: <topic>]`. Pick a plausible default that's easy to revert. Don't block the project on the research.
 

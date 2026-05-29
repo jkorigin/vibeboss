@@ -56,7 +56,23 @@ Use the template in `labs/_templates/finding.md`.
 5. **Derive confidence.** Use the rubric table — don't free-form.
 6. **Assess risk.** Independently of confidence — what's the cost of the recommendation being wrong? LOW = easy to revert. MEDIUM = some rework. HIGH = blocks a release or affects partner's core path.
 7. **Write the finding.** Use the template in `labs/_templates/finding.md`.
-8. **Handoff.** Write a handoff at `hq/projects/<project>/inbox/from-labs-<topic>.md` using the template in `labs/_templates/handoff.md`. Move the original request from `labs/inbox/requests/` to `labs/inbox/processed/`.
+8. **Handoff + log.** Deliver the finding to its consumer by EITHER method:
+   - **`from-labs` file** — write `hq/projects/<project>/inbox/from-labs-<topic>.md` using `labs/_templates/handoff.md`. The default.
+   - **Relay via build spec** — if Boss is already writing a build spec for this consumer, embed the recommendation + finding path in that spec instead of a separate file.
+
+   Then move the original request from `labs/inbox/requests/` to `labs/inbox/processed/`.
+
+## Exit checklist (HARD GATE — do not exit a spawn until all true)
+
+Before setting `current_session_id: null` and ending the spawn, every finding produced this session must satisfy:
+
+- [ ] Finding file written to `labs/research/<project>/findings/<topic>.md` with tier-tagged evidence + derived confidence + recommended action.
+- [ ] Delivered to its consumer (`from-labs` file OR relayed via build spec).
+- [ ] **Logged in `labs/handoffs/YYYY-MM-DD.md`** — one line per finding: topic, consumer, delivery method (file path or "relayed via <spec-path>"), confidence. This is the durable audit record. It is mandatory regardless of delivery method. A finding delivered but not logged is a discipline failure — the audit trail is the point.
+- [ ] Request moved from `inbox/requests/` to `inbox/processed/`.
+- [ ] `labs/STATE.md` "Recent handoffs" updated.
+
+The handoff log rots silently under spawn pressure (README step is easy to drop when you've produced 5 findings in a batch). This checklist is why it's a gate, not a suggestion. (Framework-feedback origin: Boss's 2026-05-29 runtime audit found a 5-finding batch with no handoff log — the verdicts survived only because the build specs happened to reference the finding paths. Mechanism over discipline.)
 
 ## When you're stuck
 

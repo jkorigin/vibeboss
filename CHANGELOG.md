@@ -2,7 +2,28 @@
 
 All notable changes to Vibeboss. Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Versions follow [SemVer](https://semver.org/).
 
-## [unreleased] — v0.3.0 in progress — Autonomous research-dispatch loop + lab review dashboard (2026-05-28)
+## [unreleased] — v0.3.1 in progress — Boss runtime-audit fixes (labs methodology + spawn template) (2026-05-29)
+
+Second full end-to-end use of the v0.2.3 framework-feedback channel. Boss audited the live research-lab runtime (at partner's request: "test it, check autonomy, check how work packages get assigned"), fixed the runtime, and filed two framework-feedback items for Vibe Chief to port into canon. This version applies the canon fixes + closes a bug in the feedback channel's own discovery mechanism.
+
+### Fixed
+
+- **Spawn-dispatch template missing `--verbose`.** `templates/hq/CLAUDE.md` "Spawn dispatch" command used `claude -p ... --output-format stream-json` without `--verbose`. Current Claude Code (verified 2.1.156) rejects that combo in print mode (`Error: When using --print, --output-format=stream-json requires --verbose`), so a fresh-clone's first spawn died instantly with a 1-line error file. Added `--verbose` + an explanatory note pinning the CC behavior. (Boss cost one failed Banana spawn discovering this.) Note: did NOT re-add `--max-budget-usd` — that was correctly stripped in v0.2.5 (`396b596`); Boss's suggested fix re-included it only because the runtime copy is stale. Verified `spawn-vibe-chief.sh` uses plain `-p` (text output, not stream-json) → no `--verbose` needed there.
+- **Labs Gap 1 — dev-lead → labs capability now explicitly granted.** `labs/README.md` Flow 2 promised dev-leads could file research requests, but the capability was only *described*, not *granted*. v0.3.0's per-project dispatch protocol already documents the T3 write path; v0.3.1 adds an explicit **Authorized write path** statement in `templates/projects/_per_project/README.md` (build-lead MAY write to `hq/projects/labs/inbox/requests/` — the one sanctioned path outside their own project tree) and a matching note in `labs/README.md` Flow 2 ("granted, not just described"). Canon no longer contradicts itself.
+- **Labs Gap 2 — handoff-log discipline hardened from soft-step to exit gate.** Boss's audit found a 5-finding batch where the `labs/handoffs/YYYY-MM-DD.md` log was never written (the verdicts survived only because build specs happened to cite the finding paths). Mechanism-over-discipline (the v0.2.4→v0.2.6 lesson): the handoff-log append is now a **hard gate in the research SKILL's exit checklist** (`templates/labs/skills/research/SKILL.md`), not just a README step. Also blessed "relay via build spec" as a legitimate Flow-3 delivery variant — as long as it's logged. `labs/README.md` Flow 3 + boot protocol step 7 updated to match.
+- **Labs Gap 3 — `topics/` two-stage model marked optional.** The `topics/` (raw threads) → `findings/` (synthesized) two-stage discipline was published canon but never used in practice (first-pass research writes straight to `findings/`). `templates/labs/README.md` + `templates/labs/research/README.md` now document `topics/` as optional scratch (the research SKILL uses it for `hypothesis.md` files; single-pass research skips it). An empty `topics/` is no longer a discipline gap.
+- **`.workspaces` discovery bug — the real workspace wasn't registered.** Vibe Chief's framework-feedback auto-discovery (CHIEF.md boot step) reads `vibeboss/.workspaces` to find workspaces to scan. The file held only a stale `/tmp` smoke-test path — the real workspace (created pre-v0.2.3, never `--update`-ed) was never registered, so the auto-discovery would have MISSED Boss's two pending feedback items. Found them manually this session. Registered the real workspace. (`.workspaces` is gitignored runtime tracking, not committed — this fix is local. The durable fix is that `init.sh --update` registers any workspace it touches; workspaces predating v0.2.3 need one manual registration.)
+
+### Changed
+
+- **`ROADMAP.md`** — added "Labs self-autonomy" to Phase 1 (Boss's design observation: labs is spawn-autonomous, not self-autonomous; no `labs/.claude/` boot hook or `labs/CLAUDE.md`. Deferred — interactive-first by design).
+- **`VERSION`** → `0.3.1-dev`.
+
+### Notes — the framework-feedback loop, second end-to-end run
+
+Boss diagnosed + fixed the runtime + filed two structured items at `<workspace>/hq/follow-ups/framework/`; Vibe Chief read them, ported the canon fixes, and closes the loop with `## Disposition` footers + move-to-processed (per v0.2.1 disposition protocol). The pattern is now proven twice (first: v0.2.6 PreCompact port). One meta-finding: the discovery mechanism itself had a gap (`.workspaces` staleness) — caught and fixed this pass. The channel works; its auto-discovery now actually points at the real workspace.
+
+## [v0.3.0] — 2026-05-28 — Autonomous research-dispatch loop + lab review dashboard
 
 Closes the framework's biggest stated-but-unwired feature gap. Build-leads encountering decision-issues now dispatch to research instead of stopping or hallucinating; findings come back with derived confidence + risk + tier-tagged evidence; partners review pending findings via a Bun-served local dashboard with approve/revise/reject + comments. Files-as-canon: the dashboard never owns data — it's a UI layer over the markdown.
 

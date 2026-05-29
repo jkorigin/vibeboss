@@ -39,9 +39,13 @@ Boss (or {{OPERATOR_ADDRESSED_AS}}) writes a request at `hq/projects/labs/inbox/
 
 {{LAB_LEAD_NAME}} reads `hq/projects/labs/inbox/requests/` on every spawn. After pickup: moves to `processed/`, does the research, writes finding to `labs/research/<project>/findings/<topic>.md`, writes handoff to the target project's inbox.
 
+The full research methodology {{LAB_LEAD_NAME}} follows lives in `labs/skills/research/SKILL.md` (hypothesis-first, tier-tagged evidence per LESSON-012, recommended action, exit checklist). This README is the flow overview; the SKILL is the operational playbook.
+
 ### 2. Dev-lead → Labs (build agent requesting research)
 
 Same format, same inbox. Build agents write at `hq/projects/labs/inbox/requests/YYYY-MM-DD-from-<agent>-<topic>.md`. {{LAB_LEAD_NAME}} processes it on next spawn.
+
+This is the T3 dispatch tier from LESSON-011 — build-leads self-serve research when a decision-issue is too big for an in-context spike (T1) or a sync subagent dispatch (T2). The build-lead's brief (per-project `README.md`) explicitly authorizes writing research requests to this inbox path; this flow is granted, not just described.
 
 ### 3. Labs → Dev-lead (handoff for adoption)
 
@@ -76,7 +80,13 @@ When research is complete, {{LAB_LEAD_NAME}} writes a handoff to the target proj
 <What breaks or degrades if dev lead doesn't adopt this.>
 ```
 
-{{LAB_LEAD_NAME}} also appends a one-line entry to `labs/handoffs/YYYY-MM-DD.md` for audit.
+{{LAB_LEAD_NAME}} **always** appends a one-line entry to `labs/handoffs/YYYY-MM-DD.md` for audit — this is the durable record of what was delivered to whom, and it is mandatory regardless of how the finding reached its consumer.
+
+**Two legitimate delivery methods (both must be logged):**
+1. **`from-labs` handoff file** (above) — the default. A standalone file in the consumer's inbox.
+2. **Relay via build spec** — when Boss is already writing a build spec for the consumer, the finding's recommendation + path can be embedded directly in that spec rather than dispatched as a separate file. Faster when the dispatch is already happening.
+
+Either method is fine. What is NOT fine is skipping the `handoffs/YYYY-MM-DD.md` log — the log is the audit trail, and "relayed via build spec" must be recorded there (with the spec path) just like a `from-labs` file would be. The research SKILL's exit checklist hard-gates this (`labs/skills/research/SKILL.md`).
 
 ---
 
@@ -95,8 +105,8 @@ labs/
 ├── research/
 │   ├── <project-name>/
 │   │   ├── STATE.md
-│   │   ├── topics/                   ← active research threads
-│   │   └── findings/                 ← completed, ready for adoption
+│   │   ├── topics/                   ← OPTIONAL scratch for in-progress threads (skip for single-pass research)
+│   │   └── findings/                 ← completed findings, ready for adoption
 │   └── README.md
 └── handoffs/
     └── README.md                     ← one daily .md per day, audit log
@@ -113,8 +123,8 @@ On every spawn, {{LAB_LEAD_NAME}}:
 3. Reads `labs/queue.md` for research priorities
 4. Executes top-of-queue or dispatched work
 5. Writes finding → `labs/research/<project>/findings/<topic>.md`
-6. Writes handoff → `hq/projects/<target>/inbox/requests/`
-7. Appends to `labs/handoffs/YYYY-MM-DD.md`
+6. Delivers handoff → `from-labs` file in the consumer's inbox, OR relays via build spec (both legitimate — see Flow 3)
+7. **Appends to `labs/handoffs/YYYY-MM-DD.md` — MANDATORY, every finding, every delivery method.** This is the audit trail. The SKILL exit checklist hard-gates it; do not exit a spawn with un-logged handoffs.
 8. Updates `labs/STATE.md` and `hq/projects/labs/STATE.md`
 9. Sets `current_session_id: null` in `hq/crew.yml` before exit
 
