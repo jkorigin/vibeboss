@@ -25,7 +25,7 @@ cd ~/ventures/vibeboss-workspace/hq && claude
 
 The init script asks 6 questions (with sensible defaults — just press Enter through). When Claude Code opens in `hq/`, your AI lead **Boss** auto-boots. When Codex opens in `hq/`, `AGENTS.md` supplies the same runtime instructions, and trusted `.codex/` hooks supply the same boot context.
 
-After this first install, you never type a command again. You talk to Boss; Boss handles the rest. Need to update later? Just say so. Want a new project? Just say so. Per LESSON-009 — agent-as-operator.
+After this first install, you never type a command again. You talk to Boss; Boss handles the rest. Need to update later? Just say so. Want a new project? Just say so.
 
 ### To *update* Vibeboss (existing install)
 
@@ -65,7 +65,7 @@ For Codex-based framework work, open/run Codex from this source repo. The source
 - **State that survives every session** — STATE.md as canonical "where are we right now," runlog as append-only history, decisions as immutable choices in `decisions/YYYY-MM-DD-<slug>.md`
 - **Mistakes become guardrails** — every correction the operator gives turns into a LESSONS hard gate that fires at decision-time, not just a hint in memory
 - **Inbox protocol** — operator drop-zone (`hq/projects/<name>/inbox/{requests,chats,todos,processed}/`) Boss scans on every boot and surfaces
-- **Auto-boot + compact-handover hooks** — SessionStart hook injects boot brief on every fresh/resumed session; pre-`/compact` ritual writes a structured handover that the post-compact hook re-injects. Claude Code uses `.claude/`; Codex gets `.codex/` mirrors plus `AGENTS.md` fallback instructions. Session never closes; partner never types `boot`.
+- **Auto-boot + compact-handover hooks** — SessionStart hook injects boot brief on every fresh/resumed session; pre-`/compact` ritual writes a structured handover that the post-compact hook re-injects. Claude Code uses `.claude/`; Codex gets `.codex/` mirrors plus `AGENTS.md` fallback instructions. Session never closes; you never type `boot`.
 - **Crew system** — per-project named build leads (Banana, Carrot, Ginger, etc.) registered in `hq/crew.yml`. Boss dispatches via inbox (async) or `claude --session-id` (sync). Naming theme: produce.
 
 For what's planned but not yet built (autonomous loop, verification tooling, Main/Builder/Research separation, OSS dashboard scaffold), see [ROADMAP.md](ROADMAP.md).
@@ -82,16 +82,9 @@ Vibeboss is a memory + workflow harness; the heavy lifting comes from Claude Cod
 
 - **context7** — live library documentation lookup. Better than training-data recall for any current API. Useful in nearly every project.
 - **playwright** — browser-based QA. Essential the moment your project touches a web UI.
-- **skill-creator** — supports writing your own skills (the "custom" class of the PPSB architecture). Worth having once you start codifying your own patterns.
+- **skill-creator** — supports writing your own skills. Worth having once you start codifying your own patterns.
 
-**Deliberately not recommended** (in case you wonder why — all also from `claude-plugins-official`):
-
-- `code-review` / `pr-review-toolkit` — superpowers already includes `requesting-code-review`.
-- `commit-commands` — Claude Code handles git fine without a specialized skill.
-- `hookify` — for *authoring* Claude Code hooks. Vibeboss ships its hooks; users don't write them.
-- `claude-md-management` — risks conflict with Vibeboss's own CLAUDE.md templates.
-- `feature-dev` — duplicates Vibeboss's `dev-workflow` skill.
-- `frontend-design`, `figma`, `vercel`, `firebase`, `sourcegraph`, `Notion`, other service-specific integrations — install when the project actually needs them. A Vercel-deployed Next.js project should add `vercel` and `frontend-design`; a CLI tool shouldn't.
+Everything else in the official marketplace — service integrations like `vercel`, `figma`, `sourcegraph`, and `Notion` — is opt-in per project. Add them when a project actually needs them; a Vercel-deployed Next.js app wants `vercel` and `frontend-design`, a CLI tool doesn't.
 
 **External — reference, not a recommendation:**
 
@@ -104,19 +97,11 @@ Vibeboss never auto-clones, vendors, or forks any of these. Activation happens t
 - A library you import — it's conventions + tooling, not code dependencies
 - A replacement for Cursor / Cline / Aider — it's the **orchestration layer above them**
 - An AI office framework for teams — that's a separate concern, deferred to Phase 3
-- A vibe-coding tool for engineers — engineers can use it, but the target is non-technical operators
-
-## Target user
-
-40+ business operators — founders, CEOs, consultants — who:
-- Have ideas and can describe them in plain language
-- Don't want to learn Git, terminal, or technical configuration
-- Want AI to handle the work without 50 confirmation prompts
-- Need to trust that the AI won't drift, forget, or quietly break things
+- A vibe-coding tool for engineers — engineers can use it, but it's built for operators who'd rather describe intent than run commands
 
 ## Reference: under the hood (for the technically curious)
 
-Partner doesn't need to know these — Boss handles everything via verbal intent (per LESSON-009). But if you want to see what's actually running:
+You don't need to know any of these — Boss handles them on verbal intent. But if you're curious what's actually running:
 
 | Verbal intent | What Boss runs |
 |---|---|
