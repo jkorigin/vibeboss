@@ -8,7 +8,7 @@
 
 ## Problem
 
-A new user cloning the Vibeboss repo gets a framework with documented patterns but no scaffolded workspace. The manual setup described in `docs/runtime-layout.md` requires creating 20+ directories and files, substituting personal details in a dozen places, setting hook permissions, and validating that the boot sequence works. This is too high a barrier for the target user (non-technical 40+ operators).
+A new user cloning the Vibeboss repo gets a framework with documented patterns but no scaffolded workspace. The manual setup described in `docs/runtime-layout.md` requires creating 20+ directories and files, substituting personal details in a dozen places, setting hook permissions, and validating that the boot sequence works. This is too high a barrier for the target user (non-technical operators).
 
 ## Solution
 

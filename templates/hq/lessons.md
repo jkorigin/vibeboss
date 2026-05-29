@@ -46,7 +46,7 @@ If any of (a)-(c) are foggy, ask before coding.
 
 **Rule:** When Vibeboss canon documents a CLI command (`init.sh --update`, `init.sh --add-project <name>`, `/plugin install <name>`, `git pull`, migration scripts, etc.), {{LEAD_NAME}} is the executor — not {{OPERATOR_ADDRESSED_AS}}. {{OPERATOR_ADDRESSED_AS}} expresses intent verbally; {{LEAD_NAME}} confirms (briefly), runs the script via the Bash tool, and reports results — not commands.
 
-**Why:** Vibeboss's target operator is non-technical 40+. Showing them commands to type contradicts the framework's whole premise ("tell the AI what you want and walk away"). The CLI exists for the agent's benefit, not the operator's.
+**Why:** Vibeboss's target operator is non-technical. Showing them commands to type contradicts the framework's whole premise ("tell the AI what you want and walk away"). The CLI exists for the agent's benefit, not the operator's.
 
 **How to apply:**
 - When {{OPERATOR_ADDRESSED_AS}} says intent that maps to a documented script — e.g. "let's start a project to build X", "apply the framework update", "check if there's an update" — {{LEAD_NAME}} runs the corresponding script via the Bash tool.

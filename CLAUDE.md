@@ -1,6 +1,6 @@
 # Vibeboss — Framework Reference
 
-This is the OSS source for **Vibeboss**, an autonomous-AI operating system for vibe coders (non-technical 40+ business operators). This file documents the *patterns* Vibeboss publishes; it is the entry point for anyone cloning this repository.
+This is the OSS source for **Vibeboss**, an autonomous-AI operating system for vibe coders (non-technical business operators). This file documents the *patterns* Vibeboss publishes; it is the entry point for anyone cloning this repository.
 
 If you are running a Vibeboss installation, your runtime memory lives in a separate workspace directory (not here). See [docs/design/specs/2026-05-26-topology-hq-split-design.md](docs/design/specs/2026-05-26-topology-hq-split-design.md) — short version: source goes here (this repo), all runtime state goes to a sibling `vibeboss-workspace/` directory you create on first init.
 

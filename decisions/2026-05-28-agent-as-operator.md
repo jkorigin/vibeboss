@@ -12,7 +12,7 @@ Through v0.2.4, Vibeboss canon repeatedly assumed the operator runs scripts: `ba
 
 Partner caught it: *"users won't run scripts. you need to design the agents to handle all these things."*
 
-This is correct against Vibeboss's stated target: non-technical 40+ business operators. The README's *Target user* block explicitly names *"don't want to learn Git, terminal, or technical configuration."* Showing commands to operators contradicts that premise on first contact.
+This is correct against Vibeboss's stated target: non-technical business operators. The README's *Target user* block explicitly names *"don't want to learn Git, terminal, or technical configuration."* Showing commands to operators contradicts that premise on first contact.
 
 Source of the leak: same cargo-cult pattern as the `--max-budget-usd 10` issue fixed in the v0.2.5 $10-cleanup — canon was drafted with a developer-fluent operator implicitly in mind, even though the target-user block says the opposite.
 
